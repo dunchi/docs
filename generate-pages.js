@@ -141,9 +141,7 @@ function getBaseHtml(title, content, relativePath = '') {
         <p>Anything and Everything;</p>
     </header>
 
-    <div class="nav-links">
-        <a href="${homeLink}">홈</a>
-    </div>
+    <a href="${homeLink}" class="home-link">&larr; 메인으로 돌아가기</a>
 
     <div class="container" id="card-container">
         ${content}
@@ -201,7 +199,7 @@ function getFilesAndFolders(dir, fileList = []) {
                 fileList.push({ path: filePath, type: 'directory' });
             }
             getFilesAndFolders(filePath, fileList); // Recurse into subdirectories
-        } else if (stat.isFile() && file.endsWith('.html') && file !== 'index.html' && file !== 'about.html') {
+        } else if (stat.isFile() && file.endsWith('.html') && file !== 'index.html') {
             fileList.push({ path: filePath, type: 'file' });
         }
     });
