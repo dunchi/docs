@@ -28,11 +28,11 @@
             max-width: 960px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 2rem;
         }
         .card, .card-stack {
-            height: 220px;
+            height: 170px;
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -114,7 +114,7 @@
 <body>
 
     <header class="header">
-        <h1>문서 라이브러리</h1>
+        <h1>문서 아카이브</h1>
         <p>프로젝트 관련 문서들을 찾아보세요.</p>
     </header>
 
@@ -192,7 +192,7 @@
                                         <div class="card-content-wrapper">
                                             <div class="card-content">
                                                 <h2 class="card-title">${fileName}</h2>
-                                                <p class="card-description">단일 문서 파일입니다.</p>
+                                                
                                             </div>
                                             <div class="card-footer">문서 보기 &rarr;</div>
                                         </div>
