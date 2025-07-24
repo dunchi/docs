@@ -19,8 +19,7 @@ jobs:
       with:
         node-version: '16' # Or your preferred Node.js version
 
-    - name: Install dependencies (if any)
-      run: npm install # If your generate-pages.js had npm dependencies
+    
 
     - name: Run page generation script
       run: node generate-pages.js

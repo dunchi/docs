@@ -9,7 +9,6 @@ const repo = 'docs';
 // Base HTML template function
 function getBaseHtml(title, content, relativePath = '') {
     const homeLink = relativePath ? `${relativePath}index.html` : 'index.html';
-    const aboutLink = relativePath ? `${relativePath}about.html` : 'about.html';
 
     return `
 <!DOCTYPE html>
@@ -144,7 +143,6 @@ function getBaseHtml(title, content, relativePath = '') {
 
     <div class="nav-links">
         <a href="${homeLink}">홈</a>
-        <a href="${aboutLink}">소개</a>
     </div>
 
     <div class="container" id="card-container">
@@ -160,8 +158,15 @@ function getBaseHtml(title, content, relativePath = '') {
 function getCardHtml(file, isFolder = false, filesInFolder = 0, relativePath = '') {
     const fileName = file.split('/').pop().replace('.html', '');
     const linkPath = isFolder ? `${relativePath}${file}/index.html` : `${relativePath}${file}`;
-    const cardTitle = isFolder ? file.split('/').pop() : fileName;
-    const cardDescription = isFolder ? `${filesInFolder}개의 문서 포함` : '문서 파일입니다.';
+    let cardTitle = isFolder ? file.split('/').pop() : fileName;
+    let cardDescription = ''; // Default to empty for single files
+
+    if (file === 'about.html') {
+        cardTitle = '소개';
+        cardDescription = '이 사이트에 대한 정보를 확인하세요.';
+    } else if (isFolder) {
+        cardDescription = `${filesInFolder}개의 문서 포함`;
+    }
     const footerText = isFolder ? '폴더 열기 &rarr;' : '문서 보기 &rarr;';
 
     const cardClass = isFolder ? 'card-stack' : 'card';
