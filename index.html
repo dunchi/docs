@@ -1,162 +1,59 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>8월 29일 전사 발표 목표</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>문서 목차</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
-
         body {
-            font-family: 'Noto Sans KR', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 800px;
+            padding: 20px;
             background-color: #f8f9fa;
             color: #343a40;
-            margin: 0;
-            padding: 40px;
-            display: flex;
-            justify-content: center;
         }
-
         .container {
-            max-width: 900px;
-            width: 100%;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-        }
-
-        header h1 {
-            font-size: 2.8em;
-            font-weight: 700;
-            color: #212529;
-            margin-bottom: 10px;
-        }
-
-        header .subtitle {
-            font-size: 1.3em;
-            font-weight: 300;
-            color: #6c757d;
-        }
-
-        .card {
             background-color: #ffffff;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
             padding: 30px;
-            margin-bottom: 30px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-        }
-
-        .card h2 {
-            font-size: 1.8em;
-            font-weight: 500;
-            color: #007bff;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 15px;
-            margin-top: 0;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-        }
-
-        .card h2 i {
-            margin-right: 15px;
-            font-size: 0.9em;
-        }
-
-        ul, ol {
-            padding-left: 25px;
-            list-style: none;
-        }
-
-        li {
-            font-size: 1.1em;
-            line-height: 1.8;
-            margin-bottom: 15px;
-            position: relative;
-            padding-left: 25px;
-        }
-
-        li::before {
-            content: '\f00c'; /* Font Awesome check icon */
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            color: #28a745;
-            position: absolute;
-            left: 0;
-            top: 5px;
-        }
-        
-        ol li::before {
-            content: attr(data-counter);
-            font-family: 'Noto Sans KR', sans-serif;
-            font-weight: 700;
-            background-color: #007bff;
-            color: white;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
+        h1 {
             text-align: center;
-            line-height: 28px;
-            position: absolute;
-            left: -10px;
-            top: 2px;
+            margin-bottom: 30px;
+            color: #212529;
         }
-
-        ol {
-            counter-reset: item;
+        ul {
+            list-style: none;
+            padding: 0;
         }
-
-        ol li {
-            counter-increment: item;
-            padding-left: 30px;
+        li {
+            margin-bottom: 15px;
+            font-size: 1.1em;
         }
-        
-        ol li[data-counter]::before {
-            content: attr(data-counter);
+        a {
+            text-decoration: none;
+            color: #007bff;
+            transition: color 0.2s ease-in-out;
         }
-
-
+        a:hover {
+            color: #0056b3;
+        }
+        .icon {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>8월 29일 전사 발표 목표</h1>
-            <p class="subtitle">비서 플랫폼의 핵심 기능 연동 및 시각화</p>
-        </header>
-
-        <div class="card">
-            <h2><i class="fas fa-bullseye"></i>개요</h2>
-            <ul>
-                <li>코어 기능 개발 (업장 추가, 직원 추가, 회원가입, 로그인 등)</li>
-                <li>개발 후 배포 과정 자동화</li>
-                <li>실제 데이터 기반의 회원가입, 로그인, 근태 등록/조회 페이지 시연</li>
-                <li>대시보드 페이지 UI 기획</li>
-            </ul>
-        </div>
-
-        <div class="card">
-            <h2><i class="fas fa-tasks"></i>상세 계획</h2>
-            <ol>
-                <li data-counter="a"><b>완료:</b> 코어 시스템 데이터베이스 설계 및 구축</li>
-                <li data-counter="b"><b>진행중:</b> 배포 자동화 및 민감 정보 암호화</li>
-                <li data-counter="c"><b>검토중:</b> 회원가입/로그인 기능 실서버 동작 검증</li>
-                <li data-counter="d"><b>예정:</b> 업장/직원 추가 등 코어 기능 개발 착수</li>
-                <li data-counter="e"><b>예정:</b> 멀티 서버 환경에서의 기능 연동 작업</li>
-                <li data-counter="f"><b>예정 (Front-end):</b> 백엔드 완료 후, 원석님 프론트엔드 개발 시작</li>
-                <li data-counter="g"><b>예정 (Front-end):</b> 신규 기능 UI 적용 및 실제 DB 연동</li>
-                <li data-counter="h"><b>추후 계획:</b> (Backend) 계약 기능 개발 / (Front-end) 대시보드 및 추가 페이지 UI 기획</li>
-            </ol>
-        </div>
+        <h1>문서 목차</h1>
+        <ul>
+            <li><span class="icon">📁</span><a href="corporate/presentations/2507.html">corporate/presentations/2507.html</a></li>
+            <li><span class="icon">📄</span><a href="README.md">README.md</a></li>
+        </ul>
     </div>
 </body>
 </html>
