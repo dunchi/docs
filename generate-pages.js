@@ -141,11 +141,11 @@ function getBaseHtml(title, content, relativePath = '') {
         <p>Anything and Everything;</p>
     </header>
 
-    <a href="${homeLink}" class="home-link">&larr; 메인으로 돌아가기</a>
-
     <div class="container" id="card-container">
         ${content}
     </div>
+
+    ${relativePath ? `<a href="${homeLink}" class="home-link">&larr; 메인으로 돌아가기</a>` : ''}
 
 </body>
 </html>
