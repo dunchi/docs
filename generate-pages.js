@@ -94,19 +94,24 @@ function getBaseHtml(title, content, relativePath = '') {
         .card-stack:hover::before { transform: rotate(-6deg) translateY(-5px); }
         .card-stack:hover::after { transform: rotate(6deg) translateY(-5px); }
         .card-content {
-            padding: 1.5rem;
+            padding: 1.5rem 1.5rem 0 1.5rem;
             flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
         .card-title {
             font-size: 1.25rem;
             font-weight: 600;
-            margin: 0 0 0.5rem 0;
+            margin: 0;
             color: #34495e;
         }
         .card-description {
-            font-size: 0.95rem;
-            color: #7f8c8d;
-            margin: 0;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: auto;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
         }
         .card-footer {
             padding: 1rem 1.5rem;
@@ -151,6 +156,13 @@ function getBaseHtml(title, content, relativePath = '') {
     `;
 }
 
+const FILE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
+const FOLDER_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>`;
+const FILE_ICON_ZERO = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-x-2"><path d="M20 13V7L15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+
+<path d="m17 17 5 5"/><path d="m22 17-5 5"/></svg>`;
+const FOLDER_ICON_ZERO = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-x"><path d="M10 20H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H20a2 2 0 0 1 2 2v4"/><path d="m17 17 5 5"/><path d="m22 17-5 5"/></svg>`;
+
 // Function to generate a card HTML string
 function getCardHtml(item, relativePath = '') {
     const isFolder = item.type === 'directory';
@@ -163,7 +175,16 @@ function getCardHtml(item, relativePath = '') {
         cardTitle = '소개';
         cardDescription = '이 사이트에 대한 정보를 확인하세요.';
     } else if (isFolder) {
-        cardDescription = `문서 ${item.children.filter(c => c.type === 'file').length}개, 폴더 ${item.children.filter(c => c.type === 'directory').length}개 포함`;
+        const fileCount = item.children.filter(c => c.type === 'file').length || '';
+        const folderCount = item.children.filter(c => c.type === 'directory').length || '';
+
+        const fileIcon = fileCount > 0 ? FILE_ICON : FILE_ICON_ZERO;
+        const folderIcon = folderCount > 0 ? FOLDER_ICON : FOLDER_ICON_ZERO;
+
+        cardDescription = `
+            <span style="color: #007bff; display: inline-flex; align-items: center;">${fileIcon}&nbsp&nbsp${fileCount}</span>&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp
+            <span style="color: #28a745; display: inline-flex; align-items: center;">${folderIcon}&nbsp&nbsp${folderCount}</span>
+        `;
     }
     const footerText = isFolder ? '폴더 열기 &rarr;' : '문서 보기 &rarr;';
 
