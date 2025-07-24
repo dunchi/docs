@@ -113,7 +113,7 @@
         }
         
         ol li::before {
-            content: attr(data-counter);
+            content: counter(item);
             font-family: 'Noto Sans KR', sans-serif;
             font-weight: 700;
             background-color: #007bff;
@@ -165,14 +165,14 @@
         <div class="card">
             <h2><i class="fas fa-tasks"></i>상세 계획</h2>
             <ol>
-                <li data-counter="a"><b>완료:</b> 코어 시스템 데이터베이스 설계 및 구축</li>
-                <li data-counter="b"><b>진행중:</b> 배포 자동화 및 민감 정보 암호화</li>
-                <li data-counter="c"><b>검토중:</b> 회원가입/로그인 기능 실서버 동작 검증</li>
-                <li data-counter="d"><b>예정:</b> 업장/직원 추가 등 코어 기능 개발 착수</li>
-                <li data-counter="e"><b>예정:</b> 멀티 서버 환경에서의 기능 연동 작업</li>
-                <li data-counter="f"><b>예정 (Front-end):</b> 백엔드 완료 후, 원석님 프론트엔드 개발 시작</li>
-                <li data-counter="g"><b>예정 (Front-end):</b> 신규 기능 UI 적용 및 실제 DB 연동</li>
-                <li data-counter="h"><b>추후 계획:</b> (Backend) 계약 기능 개발 / (Front-end) 대시보드 및 추가 페이지 UI 기획</li>
+                <li><b>완료:</b> 코어 시스템 데이터베이스 설계 및 구축</li>
+                <li><b>진행중:</b> 배포 자동화 및 민감 정보 암호화</li>
+                <li><b>검토중:</b> 회원가입/로그인 기능 실서버 동작 검증</li>
+                <li><b>예정:</b> 업장/직원 추가 등 코어 기능 개발 착수</li>
+                <li><b>예정:</b> 멀티 서버 환경에서의 기능 연동 작업</li>
+                <li><b>예정 (Front-end):</b> 백엔드 완료 후, 원석님 프론트엔드 개발 시작</li>
+                <li><b>예정 (Front-end):</b> 신규 기능 UI 적용 및 실제 DB 연동</li>
+                <li><b>추후 계획:</b> (Backend) 계약 기능 개발 / (Front-end) 대시보드 및 추가 페이지 UI 기획</li>
             </ol>
         </div>
     </div>
