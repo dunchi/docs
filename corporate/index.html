@@ -82,19 +82,24 @@
         .card-stack:hover::before { transform: rotate(-6deg) translateY(-5px); }
         .card-stack:hover::after { transform: rotate(6deg) translateY(-5px); }
         .card-content {
-            padding: 1.5rem;
+            padding: 1.5rem 1.5rem 0 1.5rem;
             flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
         .card-title {
             font-size: 1.25rem;
             font-weight: 600;
-            margin: 0 0 0.5rem 0;
+            margin: 0;
             color: #34495e;
         }
         .card-description {
-            font-size: 0.95rem;
-            color: #7f8c8d;
-            margin: 0;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: auto;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
         }
         .card-footer {
             padding: 1rem 1.5rem;
@@ -135,7 +140,12 @@
                 <div class="card-content-wrapper">
                     <div class="card-content">
                         <h2 class="card-title">nicems</h2>
-                        <p class="card-description">문서 0개, 폴더 1개 포함</p>
+                        <p class="card-description">
+            <span style="color: #007bff; display: inline-flex; align-items: center;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-x-2"><path d="M20 13V7L15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+
+<path d="m17 17 5 5"/><path d="m22 17-5 5"/></svg>&nbsp&nbsp</span>&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp
+            <span style="color: #28a745; display: inline-flex; align-items: center;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>&nbsp&nbsp1</span>
+        </p>
                     </div>
                     <div class="card-footer">폴더 열기 &rarr;</div>
                 </div>
@@ -147,7 +157,10 @@
                 <div class="card-content-wrapper">
                     <div class="card-content">
                         <h2 class="card-title">presentations</h2>
-                        <p class="card-description">문서 1개, 폴더 0개 포함</p>
+                        <p class="card-description">
+            <span style="color: #007bff; display: inline-flex; align-items: center;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>&nbsp&nbsp1</span>&nbsp&nbsp&nbsp|&nbsp&nbsp&nbsp
+            <span style="color: #28a745; display: inline-flex; align-items: center;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-x"><path d="M10 20H4a2 2 0 0 1-2-2V5c0-1.1.9-2 2-2h3.93a2 2 0 0 1 1.66.9l.82 1.2a2 2 0 0 0 1.66.9H20a2 2 0 0 1 2 2v4"/><path d="m17 17 5 5"/><path d="m22 17-5 5"/></svg>&nbsp&nbsp</span>
+        </p>
                     </div>
                     <div class="card-footer">폴더 열기 &rarr;</div>
                 </div>

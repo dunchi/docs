@@ -82,19 +82,24 @@
         .card-stack:hover::before { transform: rotate(-6deg) translateY(-5px); }
         .card-stack:hover::after { transform: rotate(6deg) translateY(-5px); }
         .card-content {
-            padding: 1.5rem;
+            padding: 1.5rem 1.5rem 0 1.5rem;
             flex-grow: 1;
+            display: flex;
+            flex-direction: column;
         }
         .card-title {
             font-size: 1.25rem;
             font-weight: 600;
-            margin: 0 0 0.5rem 0;
+            margin: 0;
             color: #34495e;
         }
         .card-description {
-            font-size: 0.95rem;
-            color: #7f8c8d;
-            margin: 0;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: auto;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
         }
         .card-footer {
             padding: 1rem 1.5rem;
