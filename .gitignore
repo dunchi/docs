@@ -1,0 +1,3 @@
+# Ignore generated index.html files
+/index.html
+**/index.html
