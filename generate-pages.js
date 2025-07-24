@@ -1,3 +1,5 @@
+
+
 const fs = require('fs');
 const path = require('path');
 
@@ -193,10 +195,10 @@ function buildTree(dir, currentPath = '') {
         const relativeItemPath = path.join(currentPath, file);
 
         if (stat.isDirectory()) {
-            // Check if directory contains any HTML files or subdirectories with HTML files
-            const hasHtmlContent = getFilesAndFolders(filePath).some(item => item.path.endsWith('.html'));
-            if (hasHtmlContent) {
-                tree.children.push(buildTree(filePath, relativeItemPath));
+            const subTree = buildTree(filePath, relativeItemPath);
+            // Only add subdirectory if it contains relevant content (i.e., has children)
+            if (subTree.children.length > 0) {
+                tree.children.push(subTree);
             }
         } else if (stat.isFile() && file.endsWith('.html') && file !== 'index.html' && !file.endsWith('-script.html')) {
             tree.children.push({ name: file, path: relativeItemPath, type: 'file' });
@@ -232,7 +234,7 @@ function generateIndexPage(node, rootDir) {
             cardsHtml += getCardHtml(child, relativePathToRoot ? `${relativePathToRoot}/` : '');
         }
         if (child.type === 'directory') {
-            generateIndexPage(child, rootDir);
+            generateIndexPage(child, rootDir); // Recurse for subdirectories
         }
     });
 
