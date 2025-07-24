@@ -29,21 +29,57 @@
             margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
+            gap: 2rem;
         }
-        .card {
+        .card, .card-stack {
+            height: 220px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+        .card-link-wrapper {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .card-content-wrapper {
             background-color: #ffffff;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
             overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
+            position: relative;
+            z-index: 2;
         }
-        .card:hover {
+        .card:hover .card-content-wrapper, .card-stack:hover .card-content-wrapper {
             transform: translateY(-5px);
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
         }
+        .card-stack::before, .card-stack::after {
+            content: "";
+            position: absolute;
+            border-radius: 12px;
+            background-color: #ffffff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        .card-stack::before {
+            z-index: 1;
+            transform: rotate(-4deg);
+        }
+        .card-stack::after {
+            z-index: 0;
+            transform: rotate(4deg);
+        }
+        .card-stack:hover::before { transform: rotate(-6deg) translateY(-5px); }
+        .card-stack:hover::after { transform: rotate(6deg) translateY(-5px); }
         .card-content {
             padding: 1.5rem;
             flex-grow: 1;
@@ -57,22 +93,21 @@
         .card-description {
             font-size: 0.95rem;
             color: #7f8c8d;
-            margin: 0 0 1.5rem 0;
+            margin: 0;
         }
         .card-footer {
             padding: 1rem 1.5rem;
             background-color: #f8f9fa;
             border-top: 1px solid #e9ecef;
             text-align: right;
-        }
-        .card-link {
-            text-decoration: none;
-            color: #007bff;
             font-weight: 500;
-            transition: color 0.2s ease-in-out;
+            color: #007bff;
         }
-        .card-link:hover {
-            color: #0056b3;
+        .loader {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: #7f8c8d;
         }
     </style>
 </head>
@@ -83,27 +118,98 @@
         <p>프로젝트 관련 문서들을 찾아보세요.</p>
     </header>
 
-    <div class="container">
-        <div class="card">
-            <div class="card-content">
-                <h2 class="card-title">기업 프레젠테이션 (2507)</h2>
-                <p class="card-description">2025년 7월 기업 발표 자료입니다.</p>
-            </div>
-            <div class="card-footer">
-                <a href="corporate/presentations/2507.html" class="card-link">문서 보기 &rarr;</a>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-content">
-                <h2 class="card-title">프로젝트 README</h2>
-                <p class="card-description">프로젝트의 개요와 사용법을 안내합니다.</p>
-            </div>
-            <div class="card-footer">
-                <a href="README.md" class="card-link">문서 보기 &rarr;</a>
-            </div>
-        </div>
+    <div class="container" id="card-container">
+        <div class="loader">문서 목록을 불러오는 중...</div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const owner = 'dunchi';
+            const repo = 'docs';
+            const api_url = `https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`;
+
+            const container = document.getElementById('card-container');
+
+            try {
+                const response = await fetch(api_url);
+                if (!response.ok) {
+                    throw new Error(`GitHub API 요청에 실패했습니다: ${response.status}`);
+                }
+                const data = await response.json();
+                const allFiles = data.tree.map(item => item.path);
+
+                const htmlFiles = allFiles.filter(file => file.endsWith('.html') && file !== 'index.html');
+
+                const groupedFiles = htmlFiles.reduce((acc, path) => {
+                    const parts = path.split('/');
+                    if (parts.length > 1) {
+                        const dir = parts.slice(0, -1).join('/');
+                        if (!acc[dir]) acc[dir] = [];
+                        acc[dir].push(path);
+                    } else {
+                        if (!acc.root) acc.root = [];
+                        acc.root.push(path);
+                    }
+                    return acc;
+                }, {});
+
+                container.innerHTML = ''; // 로더 제거
+
+                if (Object.keys(groupedFiles).length === 0) {
+                    container.innerHTML = '<div class="loader">표시할 문서가 없습니다.</div>';
+                    return;
+                }
+
+                for (const key in groupedFiles) {
+                    const files = groupedFiles[key];
+                    if (files.length === 0) continue;
+
+                    let cardHtml = '';
+                    if (key !== 'root') {
+                        // Directory as a stacked card
+                        const dirName = key.split('/').pop();
+                        const dirPath = key;
+                        cardHtml = `
+                            <div class="card-stack">
+                                <a href="${dirPath}" class="card-link-wrapper">
+                                    <div class="card-content-wrapper">
+                                        <div class="card-content">
+                                            <h2 class="card-title">${dirName}</h2>
+                                            <p class="card-description">${files.length}개의 문서 포함</p>
+                                        </div>
+                                        <div class="card-footer">폴더 열기 &rarr;</div>
+                                    </div>
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        // Single files in root
+                        files.forEach(file => {
+                            const fileName = file.split('/').pop().replace('.html', '');
+                            cardHtml += `
+                                <div class="card">
+                                    <a href="${file}" class="card-link-wrapper">
+                                        <div class="card-content-wrapper">
+                                            <div class="card-content">
+                                                <h2 class="card-title">${fileName}</h2>
+                                                <p class="card-description">단일 문서 파일입니다.</p>
+                                            </div>
+                                            <div class="card-footer">문서 보기 &rarr;</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            `;
+                        });
+                    }
+                    container.innerHTML += cardHtml;
+                }
+
+            } catch (error) {
+                console.error('Error fetching repository data:', error);
+                container.innerHTML = `<div class="loader">문서 목록을 불러오는 데 실패했습니다. <br> ${error.message}</div>`;
+            }
+        });
+    </script>
 
 </body>
 </html>
