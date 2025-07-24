@@ -26,6 +26,9 @@ jobs:
     - name: Run page generation script
       run: node generate-pages.js
 
+    - name: List generated files for debugging
+      run: ls -R
+
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
