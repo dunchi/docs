@@ -1,5 +1,3 @@
-
-
 const fs = require('fs');
 const path = require('path');
 
@@ -152,17 +150,18 @@ function getBaseHtml(title, content, relativePath = '') {
 }
 
 // Function to generate a card HTML string
-function getCardHtml(file, isFolder = false, filesInFolder = 0, relativePath = '') {
-    const fileName = file.split('/').pop().replace('.html', '');
-    const linkPath = isFolder ? `${relativePath}${file}/index.html` : `${relativePath}${file}`;
-    let cardTitle = isFolder ? file.split('/').pop() : fileName;
-    let cardDescription = ''; // Default to empty for single files
+function getCardHtml(item, relativePath = '') {
+    const isFolder = item.type === 'directory';
+    const fileName = item.name.replace('.html', '');
+    const linkPath = isFolder ? `${relativePath}${item.path}/index.html` : `${relativePath}${item.path}`;
+    let cardTitle = isFolder ? item.name : fileName;
+    let cardDescription = '';
 
-    if (file === 'about.html') {
+    if (item.path === 'about.html') {
         cardTitle = '소개';
         cardDescription = '이 사이트에 대한 정보를 확인하세요.';
     } else if (isFolder) {
-        cardDescription = `${filesInFolder}개의 문서 포함`;
+        cardDescription = `${item.children.filter(c => c.type === 'file').length}개의 문서 포함`;
     }
     const footerText = isFolder ? '폴더 열기 &rarr;' : '문서 보기 &rarr;';
 
@@ -183,99 +182,73 @@ function getCardHtml(file, isFolder = false, filesInFolder = 0, relativePath = '
     `;
 }
 
-// Function to recursively get all HTML files and directories
-function getFilesAndFolders(dir, fileList = []) {
+// Function to recursively build a tree structure of files and folders
+function buildTree(dir, currentPath = '') {
+    const tree = { name: path.basename(dir), path: currentPath, type: 'directory', children: [] };
     const files = fs.readdirSync(dir);
 
     files.forEach(file => {
         const filePath = path.join(dir, file);
         const stat = fs.statSync(filePath);
+        const relativeItemPath = path.join(currentPath, file);
 
         if (stat.isDirectory()) {
-            // Check if directory contains any HTML files
-            const htmlFilesInDir = fs.readdirSync(filePath).filter(f => f.endsWith('.html'));
-            if (htmlFilesInDir.length > 0) {
-                fileList.push({ path: filePath, type: 'directory' });
+            // Check if directory contains any HTML files or subdirectories with HTML files
+            const hasHtmlContent = getFilesAndFolders(filePath).some(item => item.path.endsWith('.html'));
+            if (hasHtmlContent) {
+                tree.children.push(buildTree(filePath, relativeItemPath));
             }
-            getFilesAndFolders(filePath, fileList); // Recurse into subdirectories
         } else if (stat.isFile() && file.endsWith('.html') && file !== 'index.html' && !file.endsWith('-script.html')) {
-            fileList.push({ path: filePath, type: 'file' });
+            tree.children.push({ name: file, path: relativeItemPath, type: 'file' });
         }
     });
 
-    return fileList;
+    // Sort children: directories first, then files, both alphabetically
+    tree.children.sort((a, b) => {
+        if (a.type === 'directory' && b.type === 'file') return -1;
+        if (a.type === 'file' && b.type === 'directory') return 1;
+        return a.name.localeCompare(b.name);
+    });
+
+    return tree;
+}
+
+// Function to generate index.html for a given directory in the tree
+function generateIndexPage(node, rootDir) {
+    if (node.type === 'file') return; // Only generate for directories
+
+    let cardsHtml = '';
+    const currentDirPath = path.join(rootDir, node.path);
+    const relativePathToRoot = path.relative(currentDirPath, rootDir).replace(/\\/g, '/');
+
+    // Prioritize about.html if it's a direct child of the current node
+    const aboutFile = node.children.find(child => child.path === 'about.html');
+    if (aboutFile) {
+        cardsHtml += getCardHtml(aboutFile, relativePathToRoot ? `${relativePathToRoot}/` : '');
+    }
+
+    node.children.forEach(child => {
+        if (child.path !== 'about.html') { // Skip about.html if already processed
+            cardsHtml += getCardHtml(child, relativePathToRoot ? `${relativePathToRoot}/` : '');
+        }
+        if (child.type === 'directory') {
+            generateIndexPage(child, rootDir);
+        }
+    });
+
+    const pageTitle = node.path === '' ? '문서 아카이브' : node.path.replace(/\\/g, '/');
+    const htmlContent = getBaseHtml(pageTitle, cardsHtml, relativePathToRoot ? `${relativePathToRoot}/` : '');
+    fs.writeFileSync(path.join(currentDirPath, 'index.html'), htmlContent);
+    console.log(`Generated index.html for ${node.path === '' ? 'root' : node.path}`);
 }
 
 // Main generation logic
 function generatePages() {
     const rootDir = path.resolve(__dirname);
-    const allItems = getFilesAndFolders(rootDir);
+    const tree = buildTree(rootDir);
 
-    // Group files by directory
-    const groupedItems = allItems.reduce((acc, item) => {
-        const relativePath = path.relative(rootDir, item.path);
-        const parts = relativePath.split(path.sep);
-
-        if (item.type === 'directory') {
-            acc[relativePath] = acc[relativePath] || { files: [], type: 'directory' };
-        } else { // type is 'file'
-            if (parts.length > 1) {
-                const dir = parts.slice(0, -1).join(path.sep);
-                acc[dir] = acc[dir] || { files: [], type: 'directory' };
-                acc[dir].files.push(relativePath);
-            } else {
-                acc['.'] = acc['.'] || { files: [], type: 'root' }; // Use '.' for root files
-                acc['.'].files.push(relativePath);
-            }
-        }
-        return acc;
-    }, {});
-
-    // Generate root index.html
-    let rootCardsHtml = '';
-    let rootFiles = groupedItems['.'] ? [...groupedItems['.'].files] : []; // Create a mutable copy
-    const rootFolders = Object.keys(groupedItems).filter(key => key !== '.' && groupedItems[key].type === 'directory');
-
-    // Handle about.html first
-    const aboutHtmlIndex = rootFiles.indexOf('about.html');
-    if (aboutHtmlIndex > -1) {
-        const aboutPath = rootFiles[aboutHtmlIndex];
-        rootCardsHtml += getCardHtml(aboutPath, false, 0, ''); // Generate card for about.html
-        rootFiles.splice(aboutHtmlIndex, 1); // Remove about.html from the list
-    }
-
-    rootFolders.forEach(folderPath => {
-        const filesInFolder = groupedItems[folderPath].files.length;
-        rootCardsHtml += getCardHtml(folderPath, true, filesInFolder, '');
-    });
-
-    rootFiles.forEach(filePath => {
-        rootCardsHtml += getCardHtml(filePath, false, 0, '');
-    });
-
-    fs.writeFileSync(path.join(rootDir, 'index.html'), getBaseHtml('문서 아카이브', rootCardsHtml, ''));
-    console.log('Generated root index.html');
-
-    // Generate index.html for each folder
-    for (const dirPath in groupedItems) {
-        if (dirPath === '.') continue; // Skip root
-
-        const folderItems = groupedItems[dirPath].files;
-        if (folderItems.length === 0) continue; // Skip empty folders
-
-        let folderCardsHtml = '';
-        const relativePathToRoot = path.relative(path.join(rootDir, dirPath), rootDir).replace(/\\/g, '/'); // For back navigation
-
-        folderItems.forEach(filePath => {
-            const fileName = path.basename(filePath);
-            folderCardsHtml += getCardHtml(fileName, false, 0, ''); // Pass only filename for link
-        });
-
-        const folderTitle = dirPath.replace(/\\/g, '/'); // Use forward slashes for title
-        const folderIndexHtml = getBaseHtml(folderTitle, folderCardsHtml, relativePathToRoot + '/');
-        fs.writeFileSync(path.join(rootDir, dirPath, 'index.html'), folderIndexHtml);
-        console.log(`Generated index.html for ${dirPath}`);
-    }
+    // Generate index.html for root and all subdirectories
+    generateIndexPage(tree, rootDir);
 }
 
 generatePages();
