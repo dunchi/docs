@@ -122,15 +122,14 @@ function getBaseHtml(title, content, relativePath = '') {
             font-size: 1.2rem;
             color: #7f8c8d;
         }
-        .nav-links {
+        .home-link {
+            display: block;
             text-align: center;
+            margin: 0 auto;
             margin-top: 2rem;
-        }
-        .nav-links a {
             text-decoration: none;
             color: #007bff;
             font-weight: 500;
-            margin: 0 10px;
         }
     </style>
 </head>
@@ -199,7 +198,7 @@ function getFilesAndFolders(dir, fileList = []) {
                 fileList.push({ path: filePath, type: 'directory' });
             }
             getFilesAndFolders(filePath, fileList); // Recurse into subdirectories
-        } else if (stat.isFile() && file.endsWith('.html') && file !== 'index.html') {
+        } else if (stat.isFile() && file.endsWith('.html') && file !== 'index.html' && !file.endsWith('-script.html')) {
             fileList.push({ path: filePath, type: 'file' });
         }
     });
@@ -234,8 +233,16 @@ function generatePages() {
 
     // Generate root index.html
     let rootCardsHtml = '';
-    const rootFiles = groupedItems['.'] ? groupedItems['.'].files : [];
+    let rootFiles = groupedItems['.'] ? [...groupedItems['.'].files] : []; // Create a mutable copy
     const rootFolders = Object.keys(groupedItems).filter(key => key !== '.' && groupedItems[key].type === 'directory');
+
+    // Handle about.html first
+    const aboutHtmlIndex = rootFiles.indexOf('about.html');
+    if (aboutHtmlIndex > -1) {
+        const aboutPath = rootFiles[aboutHtmlIndex];
+        rootCardsHtml += getCardHtml(aboutPath, false, 0, ''); // Generate card for about.html
+        rootFiles.splice(aboutHtmlIndex, 1); // Remove about.html from the list
+    }
 
     rootFolders.forEach(folderPath => {
         const filesInFolder = groupedItems[folderPath].files.length;
