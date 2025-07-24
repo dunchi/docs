@@ -1,59 +1,109 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>문서 목차</title>
+    <title>문서 라이브러리</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            line-height: 1.6;
-            margin: 0 auto;
-            max-width: 800px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            color: #343a40;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .header p {
+            font-size: 1.1rem;
+            color: #7f8c8d;
         }
         .container {
+            max-width: 960px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
             background-color: #ffffff;
             border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-            padding: 30px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #212529;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
         }
-        ul {
-            list-style: none;
-            padding: 0;
+        .card-content {
+            padding: 1.5rem;
+            flex-grow: 1;
         }
-        li {
-            margin-bottom: 15px;
-            font-size: 1.1em;
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+            color: #34495e;
         }
-        a {
+        .card-description {
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            margin: 0 0 1.5rem 0;
+        }
+        .card-footer {
+            padding: 1rem 1.5rem;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: right;
+        }
+        .card-link {
             text-decoration: none;
             color: #007bff;
+            font-weight: 500;
             transition: color 0.2s ease-in-out;
         }
-        a:hover {
+        .card-link:hover {
             color: #0056b3;
-        }
-        .icon {
-            margin-right: 10px;
         }
     </style>
 </head>
 <body>
+
+    <header class="header">
+        <h1>문서 라이브러리</h1>
+        <p>프로젝트 관련 문서들을 찾아보세요.</p>
+    </header>
+
     <div class="container">
-        <h1>문서 목차</h1>
-        <ul>
-            <li><span class="icon">📁</span><a href="corporate/presentations/2507.html">corporate/presentations/2507.html</a></li>
-            <li><span class="icon">📄</span><a href="README.md">README.md</a></li>
-        </ul>
+        <div class="card">
+            <div class="card-content">
+                <h2 class="card-title">기업 프레젠테이션 (2507)</h2>
+                <p class="card-description">2025년 7월 기업 발표 자료입니다.</p>
+            </div>
+            <div class="card-footer">
+                <a href="corporate/presentations/2507.html" class="card-link">문서 보기 &rarr;</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-content">
+                <h2 class="card-title">프로젝트 README</h2>
+                <p class="card-description">프로젝트의 개요와 사용법을 안내합니다.</p>
+            </div>
+            <div class="card-footer">
+                <a href="README.md" class="card-link">문서 보기 &rarr;</a>
+            </div>
+        </div>
     </div>
+
 </body>
 </html>
