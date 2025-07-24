@@ -10,6 +10,19 @@ const repo = 'docs';
 function getBaseHtml(title, content, relativePath = '') {
     const homeLink = relativePath ? `${relativePath}index.html` : 'index.html';
 
+    const pathSegments = title.split('/').filter(Boolean);
+    let breadcrumb = pathSegments.map((segment, index) => {
+        const path = pathSegments.slice(0, index + 1).join('/');
+        const link = `${relativePath}${path}/index.html`;
+        return `<a href="${link}">${segment}</a>`;
+    }).join(' / ');
+
+    if (title !== 'archive') {
+        breadcrumb = `<a href="${homeLink}">archive</a> / ${breadcrumb}`;
+    }
+
+    const pageTitle = title === 'archive' ? title : breadcrumb;
+
     return `
 <!DOCTYPE html>
 <html lang="ko">
@@ -32,6 +45,13 @@ function getBaseHtml(title, content, relativePath = '') {
         .header h1 {
             font-size: 2.5rem;
             color: #2c3e50;
+        }
+        .header h1 a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .header h1 a:hover {
+            text-decoration: underline;
         }
         .header p {
             font-size: 1.1rem;
@@ -148,7 +168,7 @@ function getBaseHtml(title, content, relativePath = '') {
 <body>
 
     <header class="header">
-        <h1>${title}</h1>
+        <h1>${pageTitle}</h1>
         <p>Anything and Everything;</p>
     </header>
 
@@ -266,7 +286,7 @@ function generateIndexPage(node, rootDir) {
         }
     });
 
-    const pageTitle = node.path === '' ? '문서 아카이브' : node.path.replace(/\\/g, '/');
+    const pageTitle = node.path === '' ? 'archive' : node.path.replace(/\\/g, '/');
     const htmlContent = getBaseHtml(pageTitle, cardsHtml, relativePathToRoot ? `${relativePathToRoot}/` : '');
     fs.writeFileSync(path.join(currentDirPath, 'index.html'), htmlContent);
     console.log(`Generated index.html for ${node.path === '' ? 'root' : node.path}`);
