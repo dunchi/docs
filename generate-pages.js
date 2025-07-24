@@ -163,7 +163,7 @@ function getCardHtml(item, relativePath = '') {
         cardTitle = '소개';
         cardDescription = '이 사이트에 대한 정보를 확인하세요.';
     } else if (isFolder) {
-        cardDescription = `${item.children.filter(c => c.type === 'file').length}개의 문서 포함`;
+        cardDescription = `문서 ${item.children.filter(c => c.type === 'file').length}개, 폴더 ${item.children.filter(c => c.type === 'directory').length}개 포함`;
     }
     const footerText = isFolder ? '폴더 열기 &rarr;' : '문서 보기 &rarr;';
 
