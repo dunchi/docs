@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>corporate/presentations</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .header p {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 2rem;
+        }
+        .card, .card-stack {
+            height: 170px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+        .card-link-wrapper {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .card-content-wrapper {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+        }
+        .card:hover .card-content-wrapper, .card-stack:hover .card-content-wrapper {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+        .card-stack::before, .card-stack::after {
+            content: "";
+            position: absolute;
+            border-radius: 12px;
+            background-color: #ffffff;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        .card-stack::before {
+            z-index: 1;
+            transform: rotate(-4deg);
+        }
+        .card-stack::after {
+            z-index: 0;
+            transform: rotate(4deg);
+        }
+        .card-stack:hover::before { transform: rotate(-6deg) translateY(-5px); }
+        .card-stack:hover::after { transform: rotate(6deg) translateY(-5px); }
+        .card-content {
+            padding: 1.5rem 1.5rem 0 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            color: #34495e;
+            white-space: normal;
+            word-wrap: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .card-description {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: auto;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .card-footer {
+            padding: 1rem 1.5rem;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: right;
+            font-weight: 500;
+            color: #007bff;
+        }
+        .loader {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: #7f8c8d;
+        }
+        .home-link {
+            display: block;
+            text-align: center;
+            margin: 0 auto;
+            margin-top: 2rem;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>corporate/presentations</h1>
+        <p>Anything and Everything;</p>
+    </header>
+
+    <div class="container" id="card-container">
+        
+        <div class="card">
+            <a href="../../corporate/presentations/2507.html" class="card-link-wrapper">
+                <div class="card-content-wrapper">
+                    <div class="card-content">
+                        <h2 class="card-title">2507</h2>
+                        <p class="card-description"></p>
+                    </div>
+                    <div class="card-footer">문서 보기 &rarr;</div>
+                </div>
+            </a>
+        </div>
+    
+    </div>
+
+    <a href="../../index.html" class="home-link">&larr; 메인으로 돌아가기</a>
+
+</body>
+</html>
+    

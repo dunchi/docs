@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gateway와 Config Server 아키텍처</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 2rem 3rem;
+        }
+        .content-container h2 {
+            color: #34495e;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        .content-container h3 {
+            color: #4a627a;
+            margin-top: 1.5rem;
+        }
+        .content-container p, .content-container li {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #555;
+        }
+        .content-container ul {
+            padding-left: 20px;
+        }
+        .content-container code {
+            background-color: #e9ecef;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+        .content-container pre {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+        .meta-info {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Gateway와 Config Server 아키텍처 문서</h1>
+    </header>
+
+    <div class="content-container">
+        <h2>개요</h2>
+        <p>이 문서는 김기범 개발자로부터 인수인계 받은 Gateway와 Config Server에 대한 내용을 정리한 문서입니다.</p>
+
+        <h2>1. 게이트웨이 (Gateway)</h2>
+        <h3>1.1 게이트웨이란?</h3>
+        <ul>
+            <li><strong>역할</strong>: '전달하는 사람' 역할을 담당</li>
+            <li><strong>기술 스택</strong>: 오픈소스 스프링 서버</li>
+            <li><strong>주요 기능</strong>: 포트포워딩 및 라우팅</li>
+        </ul>
+
+        <h3>1.2 포트포워딩 예시</h3>
+        <pre><code>
+기존 주소:
+- 서버 A: localhost:8081
+- 서버 B: localhost:8082  
+- 서버 C: localhost:8083
+
+게이트웨이를 통한 매핑:
+- 서버 A: hr.biseo.kr/A
+- 서버 B: hr.biseo.kr/B
+- 서버 C: hr.biseo.kr/C
+        </code></pre>
+
+        <h3>1.3 운영 특징</h3>
+        <ul>
+            <li><strong>동적 확장</strong>: 새로운 도메인(리소스)이 아키텍처에 추가되면 컨트롤러 매핑을 추가하고 게이트웨이 재시작 필요</li>
+            <li><strong>보안 기능</strong>: 스프링 서버이므로 자유로운 방화벽 설정 및 차단 기능 구현 가능</li>
+        </ul>
+
+        <h2>2. 필터링 (Filtering)</h2>
+        <h3>2.1 필터링 개념</h3>
+        <ul>
+            <li><strong>설정 방법</strong>: yml 파일의 <code>filters</code> 속성을 통해 기능 적용/해제</li>
+            <li><strong>동작 방식</strong>: 거름망이 아닌 드립커피의 종이필터처럼 기능모듈을 '통과'하는 개념</li>
+        </ul>
+
+        <h3>2.2 주요 필터 종류</h3>
+        <h4>세션 관리 필터</h4>
+        <p><strong>SaveSession</strong>: 다운스트림 호출을 전달하기 전에 WebSession::save 작업을 강제로 수행하는 필터입니다. Spring Session과 lazy data store를 사용할 때 특히 유용하며, 전달된 호출을 수행하기 전에 세션 상태가 저장되었는지 확인해야 할 때 사용됩니다.</p>
+
+        <h4>인증 관련 필터</h4>
+        <p><strong>TokenRelay</strong>: 현재 인증된 사용자의 OAuth2 access token을 추출하여 다운스트림 서비스로 전달하는 필터입니다. 사용자 로그인 및 토큰 획득 외에도, 필터가 인증된 사용자의 access token을 추출하여 다운스트림 요청의 Authorization 헤더에 Bearer 토큰으로 추가합니다.</p>
+        <p>SaveSession, TokenRelay 두 필터는 client 브라우저의 세션정보를 이용해서 실제 DB 속의 ‘유저' 를 조회하고 Jwt 토큰으로 치환하여 아키텍처 내 도메인(리소스) 들이 간편하게 사용할 수 있도록 해줌</p>
+
+        <h4>경로 처리 필터</h4>
+        <p><strong>stripPrefix</strong>: URL 경로에서 한 단계를 제거</p>
+        <ul>
+            <li>예시: <code>hr.biseo.com/attendance/getMyStatus</code> → <code>attendance.com/getMyStatus</code></li>
+            <li>⚠️ 정확한 예시가 아님, 개념 설명용</li>
+        </ul>
+
+        <h2>3. Config 서버</h2>
+        <h3>3.1 Config 서버의 목적</h3>
+        <ul>
+            <li><strong>중앙 관리</strong>: yml 파일의 중앙집중식 관리</li>
+            <li><strong>효율성</strong>: 설정 변경 시 개별 서버 접속/수정/재시작을 1회로 단축</li>
+        </ul>
+
+        <h3>3.2 운영상 이점</h3>
+        <pre><code>
+기존 방식: SSH 접속 → 수정 → 서버 재시작 (서버 수만큼 반복)
+Config 서버 방식: 중앙에서 1회 처리
+        </code></pre>
+
+        <h2>4. Gateway와 Config Server의 상호 영향</h2>
+        <h3>4.1 전제 조건</h3>
+        <ul>
+            <li><strong>컨테이너 환경</strong>: 모든 서버는 Docker를 통해 실행</li>
+            <li><strong>네트워킹</strong>: Docker Swarm을 통한 서비스 디스커버리</li>
+            <li><strong>주소 체계</strong>: <code>192.168.0.1</code> 대신 <code>attendance</code>와 같은 Docker Swarm HostName 사용</li>
+        </ul>
+
+        <h3>4.2 의존성 관계</h3>
+        <h4>Config Server 의존성</h4>
+        <ul>
+            <li><strong>게이트웨이</strong>: Config 서버가 실행된 후에만 시작 가능</li>
+            <li><strong>주소 해결</strong>: Docker Swarm HostName으로 Config 서버 접근</li>
+        </ul>
+
+        <h4>네트워킹 구조</h4>
+        <ul>
+            <li><strong>외부 → 내부</strong>: 게이트웨이를 통한 라우팅</li>
+            <li><strong>내부 → 내부</strong>: Docker Swarm HostName을 통한 직접 통신</li>
+            <li><strong>HostName 관리</strong>: Docker Swarm HostName은 Config 서버에 명시</li>
+        </ul>
+
+        <h3>4.3 인증 처리 방식</h3>
+        <h4>외부 요청 처리</h4>
+        <ol>
+            <li>외부 클라이언트가 게이트웨이를 통해 접근</li>
+            <li>게이트웨이에서 세션을 JWT 토큰으로 변환</li>
+            <li>내부 서비스들은 JWT 토큰 사용</li>
+        </ol>
+
+        <h4>내부 통신</h4>
+        <ul>
+            <li><strong>토큰 변환 불필요</strong>: 외부 요청이 게이트웨이를 거치면서 이미 토큰을 획득했기 때문</li>
+            <li><strong>직접 통신</strong>: Docker Swarm HostName을 통한 서비스 간 직접 통신</li>
+        </ul>
+
+        <h3>4.4 실행 순서 제약</h3>
+        <h4>실행 불가능한 서비스들</h4>
+        <ul>
+            <li><strong>게이트웨이</strong>: Config 서버 의존성으로 인해 먼저 시작 불가</li>
+            <li><strong>BFF (Backend for Frontend)</strong>: Config 서버 의존성으로 인해 먼저 시작 불가</li>
+        </ul>
+
+        <h4>독립 실행 가능한 서비스</h4>
+        <ul>
+            <li><strong>데이터베이스</strong>: yml 설정이 불필요하고, 요청을 받기만 하는 구조로 독립 실행 가능</li>
+        </ul>
+
+        <h2>정리</h2>
+        <p>이 아키텍처에서 Config Server는 모든 설정의 중심이 되며, Gateway는 외부와 내부를 연결하는 핵심 관문 역할을 수행합니다. Docker Swarm 환경에서 두 서비스는 서로 밀접하게 연관되어 있으며, 특히 실행 순서와 네트워킹 측면에서 중요한 의존성을 가지고 있습니다.</p>
+
+        <h2>참고 문헌</h2>
+        <h3>Spring Cloud Gateway 공식 문서</h3>
+        <ul>
+            <li><a href="https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway/gatewayfilter-factories/tokenrelay-factory.html" target="_blank">TokenRelay GatewayFilter Factory</a></li>
+            <li><a href="https://docs.spring.io/spring-cloud-gateway/reference/spring-cloud-gateway/gatewayfilter-factories/savesession-factory.html" target="_blank">SaveSession GatewayFilter Factory</a></li>
+        </ul>
+
+        <div class="meta-info">
+            <p><em>작성일: 2025년 6월 27일</em></p>
+            <p><em>작성자: 김한주 (김기범 개발자 인수인계 내용 정리)</em></p>
+        </div>
+
+        <a href="../index.html" class="home-link">&larr; 이전으로 돌아가기</a>
+    </div>
+</body>
+</html>

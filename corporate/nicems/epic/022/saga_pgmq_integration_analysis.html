@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAGA + PGMQ 코드 통합 방안 분석</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 2rem 3rem;
+        }
+        .content-container h2 {
+            color: #34495e;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        .content-container h3 {
+            color: #4a627a;
+            margin-top: 1.5rem;
+        }
+        .content-container p, .content-container li {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #555;
+        }
+        .content-container ul {
+            padding-left: 20px;
+        }
+        .content-container code {
+            background-color: #e9ecef;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+        .content-container pre {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        th, td {
+            border: 1px solid #e9ecef;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        blockquote {
+            border-left: 4px solid #007bff;
+            padding-left: 1rem;
+            margin-left: 0;
+            font-style: italic;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>SAGA + PGMQ 코드 통합 방안 분석</h1>
+    </header>
+
+    <div class="content-container">
+        <blockquote>
+            <p><strong>분석 목적:</strong> BFF 서버에 기존 saga+pgmq 코드를 통합하는 두 가지 방안의 장단점 비교</p>
+        </blockquote>
+
+        <h2>방안 1: org.biseo.bff 내부 통합</h2>
+        <pre><code>main/java/org/biseo/bff/Application.java  ← 기존 위치 유지
+main/java/org/biseo/bff/
+├── common/
+│   ├── config/ (기존 + QueueInitializer, SagaConfiguration)
+│   ├── exception/
+│   ├── util/ (기존 + Util.java from saga)
+│   ├── validation/
+│   └── pgmq/ (PgmqService, MessageRepository - 공용 PGMQ 기능)
+├── domain/
+│   ├── core/
+│   ├── keycloak/
+│   └── saga/ (SagaDefinition, SagaOrchestrator, SagaStep 등 - 순수 saga 비즈니스 로직)
+├── fusion/
+│   ├── core/
+│   ├── general/
+│   ├── supportive/
+│   └── saga/ (SagaController, SagaMessageProcessor, CompensationService - 복합 비즈니스 로직)
+└── global/
+    ├── response/
+    └── dto/ (SagaCommand, SagaResponse 등 - 외부 통신용 DTO)</code></pre>
+        <h3>✅ 장점</h3>
+        <ul>
+            <li><strong>기존 구조 유지:</strong> BFF의 기존 폴더 구조(common, domain, fusion, global)를 그대로 활용</li>
+            <li><strong>단순한 의존성:</strong> 모든 코드가 하나의 모듈 내에서 관리되어 의존성이 단순함</li>
+            <li><strong>자연스러운 통합:</strong> saga가 BFF의 내부 기능으로 자연스럽게 통합</li>
+        </ul>
+        <h3>❌ 단점</h3>
+        <ul>
+            <li><strong>미래 분리 어려움:</strong> 향후 saga를 독립 서비스로 분리할 때 리팩토링 비용 증가</li>
+            <li><strong>코드 증가:</strong> BFF 프로젝트의 전체 코드량이 증가하여 복잡도 상승</li>
+            <li><strong>모듈 경계 모호:</strong> saga가 여러 폴더에 분산되어 모듈 전체 파악이 어려울 수 있음</li>
+        </ul>
+
+        <h2>2. 패키지 구조 분리 방안 비교</h2>
+        <h3>방안 2: org.biseo.bff vs org.biseo.saga 분리</h3>
+        <pre><code>main/java/org/biseo/Application.java  ← 메인 클래스 이동
+main/java/org/biseo/bff/
+├── common/
+├── domain/
+├── fusion/
+└── global/
+
+main/java/org/biseo/saga/
+├── config/
+├── controller/
+├── core/
+├── dto/
+├── entity/
+├── repository/
+└── service/</code></pre>
+        <h3>✅ 장점</h3>
+        <ul>
+            <li><strong>명확한 모듈 분리:</strong> saga의 책임과 역할이 명확하게 분리됨</li>
+            <li><strong>독립성 확보:</strong> 각 모듈이 특정 기능을 대표하여 독립적 배포와 테스트 용이</li>
+            <li><strong>미래 확장성:</strong> 향후 saga를 별도 서비스로 추출할 때 용이함</li>
+            <li><strong>관련 컴포넌트 집중:</strong> saga 관련 모든 클래스를 한 곳에서 관리</li>
+        </ul>
+        <h3>❌ 단점</h3>
+        <ul>
+            <li><strong>중복 가능성:</strong> config, common 등의 공통 기능이 양쪽에 중복될 수 있음</li>
+            <li><strong>의존성 복잡도:</strong> bff와 saga 간 상호 의존성 관리 필요</li>
+            <li><strong>프로젝트 복잡도 증가:</strong> 두 개의 분리된 모듈 구조로 인한 복잡성</li>
+        </ul>
+
+        <h2>2. Spring Boot 관점에서의 기술적 고려사항</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>항목</th>
+                    <th>통합 방안 (org.biseo.bff 내부)</th>
+                    <th>분리 방안 (org.biseo.bff vs org.biseo.saga)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>컴포넌트 스캔</td>
+                    <td>org.biseo.bff 루트에서 자동 스캔</td>
+                    <td>org.biseo 루트에서 자동 스캔</td>
+                </tr>
+                <tr>
+                    <td>설정 복잡도</td>
+                    <td>낮음 (단일 모듈)</td>
+                    <td>중간 (모듈 간 통신 고려)</td>
+                </tr>
+                <tr>
+                    <td>빌드 복잡도</td>
+                    <td>낮음 (단일 JAR)</td>
+                    <td>중간 (멀티 모듈 고려 가능)</td>
+                </tr>
+                <tr>
+                    <td>테스트 격리</td>
+                    <td>중간 (패키지별 테스트)</td>
+                    <td>높음 (모듈별 독립 테스트)</td>
+                </tr>
+                <tr>
+                    <td>배포 유연성</td>
+                    <td>낮음 (단일 배포만 가능)</td>
+                    <td>높음 (향후 분리 배포 가능)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>3. 권장사항</h2>
+        <h3>🔍 전제 조건에 따른 권장사항</h3>
+        <h4>Case 1: 향후 saga 서비스를 분리하지 않는다면</h4>
+        <p><strong>✅ 추천: 방안 1 (org.biseo.bff 내부 통합)</strong></p>
+        <p><strong>근거:</strong></p>
+        <ul>
+            <li><strong>기존 구조 활용:</strong> BFF의 기존 common, domain, fusion, global 구조를 그대로 활용</li>
+            <li><strong>팀 폴더 정의 부합:</strong> 각 폴더의 역할 정의에 완벽히 맞는 코드 배치</li>
+            <li><strong>자연스러운 통합:</strong> saga가 BFF의 내부 기능으로 자연스럽게 통합</li>
+        </ul>
+        <h4>🏗️ 팀 폴더 정의와 saga 코드 배치</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>폴더</th>
+                    <th>팀 정의</th>
+                    <th>Saga 코드 배치</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>common</strong></td>
+                    <td>프로젝트 내에서 공용으로 사용되는 코드</td>
+                    <td>PgmqService, 설정 클래스들 - 여러 곳에서 사용되는 공용 PGMQ 기능</td>
+                </tr>
+                <tr>
+                    <td><strong>domain</strong></td>
+                    <td>단일 도메인의 순수 비즈니스 로직, 독립적 모듈화</td>
+                    <td>SagaDefinition, SagaOrchestrator - saga 도메인의 핵심 비즈니스 로직</td>
+                </tr>
+                <tr>
+                    <td><strong>fusion</strong></td>
+                    <td>여러 도메인을 조합한 복합 비즈니스 로직, API 엔드포인트별 데이터 조합</td>
+                    <td>SagaController, CompensationService - 여러 도메인 서비스를 조합하는 로직</td>
+                </tr>
+                <tr>
+                    <td><strong>global</strong></td>
+                    <td>다른 도메인과 소통할 때 필요한 코드</td>
+                    <td>SagaCommand, SagaResponse - 외부 시스템과의 통신용 DTO</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4>Case 2: 향후 saga 서비스 분리 가능성이 있다면</h4>
+        <p><strong>✅ 추천: 방안 2 (org.biseo.bff vs org.biseo.saga 분리)</strong></p>
+        <p><strong>근거:</strong></p>
+        <ul>
+            <li><strong>명확한 코드 구조:</strong> saga와 BFF의 역할이 패키지 레벨에서 명확히 구분</li>
+            <li><strong>코드 관리 용이성:</strong> saga 관련 모든 코드를 한 패키지에서 집중 관리</li>
+            <li><strong>팀 개발 효율성:</strong> saga 기능 개발 시 관련 코드를 쉽게 찾고 수정 가능</li>
+            <li><strong>아키텍처 일관성:</strong> 기능별 패키지 분리로 Spring Boot 모범 사례 준수</li>
+            <li><strong>단일 JAR 배포:</strong> 여전히 하나의 실행 파일로 간단한 배포 유지</li>
+        </ul>
+
+        <h4>Case 3: 현재 결정하기 어려운 상황이라면</h4>
+        <p><strong>🔄 단계적 접근 방안 (방안 1 → 방안 2)</strong></p>
+        <ol>
+            <li><strong>1단계:</strong> 우선 방안 1로 시작 (org.biseo.bff 내부 통합)
+                <ul>
+                    <li>빠른 개발과 초기 검증에 집중</li>
+                    <li>saga+pgmq 기능의 안정성 확보</li>
+                    <li>팀의 폴더 정의에 맞는 자연스러운 코드 배치</li>
+                </ul>
+            </li>
+            <li><strong>2단계:</strong> 필요 시 방안 2로 리팩토링 (분리)
+                <ul>
+                    <li>서비스 성숙도가 높아지고 분리 필요성이 명확해질 때</li>
+                    <li>팀 규모 확장이나 독립적 배포 요구사항 발생 시</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>📋 구현 단계별 가이드</h3>
+        <ol>
+            <li><strong>1단계:</strong> Application.java 위치 결정 (전제 조건에 따라)</li>
+            <li><strong>2단계:</strong> 패키지 구조 생성 및 코드 이관</li>
+            <li><strong>3단계:</strong> 공통 설정 및 유틸리티 정리</li>
+            <li><strong>4단계:</strong> 테스트 및 검증</li>
+            <li><strong>5단계:</strong> 필요 시 단계적 리팩토링</li>
+        </ol>
+
+        <h2>4. 결론</h2>
+        <p>선택은 <strong>"향후 saga 서비스 분리 계획"</strong>에 따라 달라집니다.<br>분리 계획이 없다면 방안 1(내부 통합)이, 분리 가능성이 있다면 방안 2(패키지 분리)가 적합합니다.<br>확실하지 않다면 방안 1로 시작하여 필요 시 방안 2로 단계적 전환을 권장합니다.</p>
+        <blockquote>
+            <p><strong>핵심 결정 기준:</strong> saga+pgmq의 미래 독립성 요구사항에 따라 현재의 아키텍처 선택이 결정되어야 합니다.</p>
+        </blockquote>
+
+        <hr>
+        <p><em>작성일: 2025년 6월 20일 | 분석 기준: Spring Boot 모범 사례 및 Java 패키지 구조 원칙</em></p>
+
+        <a href="../index.html" class="home-link">&larr; 이전으로 돌아가기</a>
+    </div>
+</body>
+</html>

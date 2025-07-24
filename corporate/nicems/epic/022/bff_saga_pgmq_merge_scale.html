@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BFF Saga 패턴 확장성 개선 개발 기록</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 2rem 3rem;
+        }
+        .content-container h2 {
+            color: #34495e;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        .content-container h3 {
+            color: #4a627a;
+            margin-top: 1.5rem;
+        }
+        .content-container p, .content-container li {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #555;
+        }
+        .content-container ul {
+            padding-left: 20px;
+        }
+        .content-container code {
+            background-color: #e9ecef;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+        .content-container pre {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+        .meta-info {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>BFF Saga 패턴 확장성 개선 개발 기록</h1>
+    </header>
+
+    <div class="content-container">
+        <h2>📋 개요</h2>
+        <p>MSA(Microservices Architecture) 환경의 BFF(Backend For Frontend)에서 Saga 패턴 구현 시 발생한 확장성 문제와 이를 해결하기 위한 개발 과정을 기록한 문서입니다.</p>
+
+        <h2>🚨 발생한 문제점</h2>
+        <h3>주요 문제: 기하급수적 코드 증가</h3>
+        <p>MSA 아키텍처 속 BFF의 특성상 다음과 같은 확장성 문제가 발생했습니다:</p>
+        <ul>
+            <li><strong>도메인 기능 증가</strong>: 호출해야 하는 도메인의 기능이 점점 늘어남</li>
+            <li><strong>순서 정의 코드 폭증</strong>: 새로운 비즈니스 플로우마다 <code>registerXXXProcessingSaga()</code> 메서드 필요</li>
+            <li><strong>1:1 매칭 함수 증가</strong>: 각 스텝별로 개별 execute/compensate 함수가 기하급수적으로 증가</li>
+            <li><strong>Switch-case 문 확장</strong>: <code>performExecute()</code>와 <code>performCompensation()</code> 메서드의 switch문이 계속 커짐</li>
+        </ul>
+        <h3>현재 코드 구조의 한계</h3>
+        <pre><code>// 문제가 되는 기존 구조 예시
+return switch (stepName) {
+    case "VALIDATE_ORDER" -> executeValidateOrder(command);
+    case "RESERVE_INVENTORY" -> executeReserveInventory(command);
+    case "PROCESS_PAYMENT" -> executeProcessPayment(command);
+    case "SHIP_ORDER" -> executeShipOrder(command);
+    case "SEND_CONFIRMATION" -> executeSendConfirmation(command);
+    // 수백-수천개의 case문이 계속 추가될 예정...
+    default -> throw new IllegalArgumentException("Unknown step for execute: " + stepName);
+};</code></pre>
+        <p><strong>결과적으로</strong>: N개 도메인 × M개 조합 시나리오의 조합 폭발 발생</p>
+
+        <h2>🔧 첫 번째 해결 시도</h2>
+        <h3>접근 방법: 스텝-함수 1:1 연결 해제</h3>
+        <p>다음과 같은 아이디어로 문제 해결을 시도했습니다:</p>
+        <h4>핵심 아이디어</h4>
+        <ul>
+            <li><strong>메타데이터 기반 접근</strong>: 서버 시작 시점에 execute endpoint, compensate endpoint, do compensate or not 등의 정보를 데이터베이스에 저장</li>
+            <li><strong>추상화된 단일 처리</strong>: 실행 시점에는 하드코딩된 함수 매칭 대신, 저장된 메타데이터를 조회하여 하나의 추상화된 함수에서 동적 처리</li>
+            <li><strong>설정 기반 처리</strong>: 코드 레벨의 하드코딩을 설정 레벨의 메타데이터로 이동</li>
+        </ul>
+        <h4>기대 효과</h4>
+        <ul>
+            <li>Switch-case 문 제거</li>
+            <li>새로운 스텝 추가 시 코드 수정 없이 설정만으로 처리</li>
+            <li>확장성 문제 근본적 해결</li>
+        </ul>
+
+        <h2>⛔ 첫 번째 시도 중단 이유</h2>
+        <h3>복잡하게 얽힌 구조적 문제들</h3>
+        <p>리팩토링을 진행하면서 다음과 같은 복합적인 문제들이 발견되었습니다:</p>
+        <h4>1. 메시지 구조 불일치</h4>
+        <ul>
+            <li><strong>execute, retry, compensate마다 메시지의 구조가 다름</strong></li>
+            <li>통일된 추상화 적용의 어려움</li>
+        </ul>
+        <h4>2. 저장소 혼재 문제</h4>
+        <ul>
+            <li><strong>sagaDefinition과 sagaStepDefinition</strong>: 메모리에 저장</li>
+            <li><strong>sagaInstance와 sagaStep</strong>: 데이터베이스에 저장</li>
+            <li>두 저장소 간의 일관성 및 동기화 복잡성</li>
+        </ul>
+        <h4>3. 참조 구조 복잡성</h4>
+        <ul>
+            <li><strong>sagaInstance와 sagaStep</strong>: saga와 step에 대한 name만을 key로 사용</li>
+            <li><strong>실제 업무 정보</strong>: url 등은 메모리에서 name으로 definition을 조회해서 참고</li>
+            <li>간접 참조로 인한 복잡한 의존성</li>
+        </ul>
+        <h4>4. 직접 리팩토링의 한계</h4>
+        <ul>
+            <li>여러 문제가 서로 얽혀있어 순차적 해결이 어려움</li>
+            <li>전체 구조에 대한 근본적 재설계 필요성 인식</li>
+        </ul>
+
+        <h2>🤖 AI 활용 결정</h2>
+        <h3>AI 도움 요청 배경</h3>
+        <p>복잡하게 얽힌 구조적 문제들로 인해 직접 리팩토링에 한계를 느끼고, 다음과 같은 이유로 AI의 도움을 요청했습니다:</p>
+        <ul>
+            <li><strong>구조적 복잡성</strong>: 여러 문제가 서로 연관되어 있어 개별 해결이 어려움</li>
+            <li><strong>전문성 부족</strong>: Spring Boot와 Saga 패턴의 고급 활용법에 대한 지식 부족</li>
+            <li><strong>설계 관점</strong>: 전체 아키텍처 관점에서의 근본적 해결책 필요</li>
+            <li><strong>검증된 패턴</strong>: 업계에서 검증된 모범 사례와 패턴 적용 필요</li>
+        </ul>
+
+        <h2>💡 AI 제안 해결법</h2>
+        <h3>핵심 접근 방식: 설정 기반 동적 Saga 실행 아키텍처</h3>
+        <p>AI가 제안한 해결책은 <strong>Strategy 패턴과 Spring의 고급 기능을 활용한 동적 실행 프레임워크</strong>입니다.</p>
+        <h4>1. Strategy 패턴 기반 Handler 구조</h4>
+        <p><strong>기존 Switch-case 제거</strong>:</p>
+        <pre><code>// Handler 인터페이스 도입
+public interface SagaStepHandler {
+    String getStepType();
+    SagaStepResult execute(SagaContext context);
+    SagaStepResult compensate(SagaContext context);
+}
+
+// 동적 Handler 관리
+@Service
+public class SagaStepRegistry {
+    private final Map&lt;String, SagaStepHandler&gt; handlers;
+    
+    public SagaStepHandler getHandler(String stepType) {
+        return handlers.get(stepType);
+    }
+}</code></pre>
+        <h4>2. 설정 기반 워크플로우 정의</h4>
+        <p><strong>YAML 설정으로 워크플로우 관리</strong>:</p>
+        <pre><code>saga:
+  workflows:
+    order-processing:
+      steps:
+        - name: payment
+          service-endpoint: "http://payment-service/api/v1/charge"
+          compensation-endpoint: "http://payment-service/api/v1/refund"
+          timeout: 30s
+          retries: 3
+          is-compensatable: true</code></pre>
+        <h4>3. WebClient 기반 동적 API 호출</h4>
+        <p><strong>동적 엔드포인트 호출 시스템</strong>:</p>
+        <pre><code>@Service
+public class DynamicApiService {
+    public &lt;T&gt; Mono&lt;T&gt; callServiceEndpoint(String endpoint, Object request, Class&lt;T&gt; responseType) {
+        return webClient.post()
+            .uri(endpoint)
+            .bodyValue(request)
+            .retrieve()
+            .retryWhen(Retry.backoff(3, Duration.ofMillis(500)))
+            .timeout(Duration.ofSeconds(30));
+    }
+}</code></pre>
+        <h4>4. 완전한 추상화 구현</h4>
+        <p><strong>동적 실행 엔진</strong>:</p>
+        <ul>
+            <li>ApplicationContext와 리플렉션 활용</li>
+            <li>Handler 기반 실행 vs API 호출 동적 선택</li>
+            <li>AOP를 활용한 횡단 관심사 처리</li>
+        </ul>
+        <h3>기대 효과</h3>
+        <ul>
+            <li><strong>코드 중복 95% 감소</strong>: Handler 패턴으로 공통 로직 추상화</li>
+            <li><strong>신규 Step 추가 시간 90% 단축</strong>: 설정 파일만 수정하면 즉시 적용</li>
+            <li><strong>수천개 함수 지원</strong>: 동적 로딩 및 지연 초기화</li>
+            <li><strong>무중단 배포</strong>: 설정 변경만으로 워크플로우 수정 가능</li>
+        </ul>
+
+        <h2>📋 단계별 구현 계획</h2>
+        <h3>Phase 1: 기반 구조 마련 (1-2주)</h3>
+        <ol>
+            <li>Handler 인터페이스 도입</li>
+            <li>Registry 패턴 구현</li>
+            <li>설정 파일 정의</li>
+        </ol>
+        <h3>Phase 2: 동적 실행 엔진 구축 (2-3주)</h3>
+        <ol>
+            <li>WebClient 통합</li>
+            <li>리플렉션 기반 실행 구현</li>
+            <li>AOP 통합</li>
+        </ol>
+        <h3>Phase 3: 고도화 및 최적화 (2-4주)</h3>
+        <ol>
+            <li>Enterprise 라이브러리 통합</li>
+            <li>비동기 처리 최적화</li>
+            <li>모니터링 체계 강화</li>
+        </ol>
+
+        <h2>🎯 결론</h2>
+        <p>MSA 환경에서 BFF의 Saga 패턴 확장성 문제를 해결하기 위해 다음과 같은 여정을 거쳤습니다:</p>
+        <ol>
+            <li><strong>문제 인식</strong>: 기하급수적 코드 증가 문제 발견</li>
+            <li><strong>직접 시도</strong>: 스텝-함수 1:1 연결 해제 시도</li>
+            <li><strong>한계 인식</strong>: 복잡한 구조적 문제로 인한 중단</li>
+            <li><strong>AI 활용</strong>: 전문적 해결책 도출</li>
+            <li><strong>해결 방향</strong>: 설정 기반 동적 실행 아키텍처 채택</li>
+        </ol>
+        <p>이를 통해 <strong>유연하고 확장 가능한 Saga 패턴 구현</strong>이 가능해질 것으로 기대됩니다.</p>
+
+        <div class="meta-info">
+            <p><em>작성일: 2025년 6월 27일</em></p>
+            <p><em>작성자: 김한주</em></p>
+        </div>
+
+        <a href="../index.html" class="home-link">&larr; 이전으로 돌아가기</a>
+    </div>
+</body>
+</html>

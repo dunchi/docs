@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL 복제 방식과 CDC 개념 정리</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 2rem 3rem;
+        }
+        .content-container h2 {
+            color: #34495e;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        .content-container h3 {
+            color: #4a627a;
+            margin-top: 1.5rem;
+        }
+        .content-container p, .content-container li {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #555;
+        }
+        .content-container ul {
+            padding-left: 20px;
+        }
+        .content-container code {
+            background-color: #e9ecef;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>PostgreSQL 복제 방식과 CDC 개념 정리</h1>
+    </header>
+
+    <div class="content-container">
+        <h2>1. PostgreSQL 복제 방식 비교</h2>
+        <h3>Physical Replication (replica)</h3>
+        <ul>
+            <li>바이너리 레벨에서 데이터 블록을 그대로 복사 (파일 복사와 유사)</li>
+            <li>빠른 성능, 간단한 설정</li>
+            <li>전체 데이터베이스만 복제 가능, 선택적 복제 불가</li>
+            <li>동일한 PostgreSQL 버전 간에만 가능</li>
+        </ul>
+
+        <h3>Logical Replication (logical)</h3>
+        <ul>
+            <li>SQL 명령어 레벨에서 변경사항을 해석하여 처리</li>
+            <li>테이블 단위 선택적 복제 가능</li>
+            <li>다른 PostgreSQL 버전 간 복제 지원</li>
+            <li>변경 이벤트를 다른 시스템으로 전파 가능 (CDC 구현)</li>
+            <li>상대적으로 복잡한 설정, 성능 오버헤드 존재</li>
+        </ul>
+
+        <h3>Streaming Replication (스트림 방식)</h3>
+        <ul>
+            <li>실시간으로 WAL 로그를 전송하여 복제</li>
+            <li>Physical과 Logical 모두에서 사용 가능한 방식</li>
+        </ul>
+
+        <h2>2. 복제 vs CDC 개념 차이</h2>
+        <h3>복제 (Replication)</h3>
+        <ul>
+            <li><strong>목적</strong>: 데이터의 정확한 사본 생성</li>
+            <li><strong>특징</strong>: 원본과 동일한 구조와 데이터 유지</li>
+            <li><strong>예시</strong>: CQRS 구현 시 읽기 전용 복제본 생성</li>
+            <li><strong>활용</strong>: 백업, 읽기 성능 향상, 고가용성</li>
+        </ul>
+
+        <h3>CDC (Change Data Capture)</h3>
+        <ul>
+            <li><strong>목적</strong>: 데이터 변경사항의 전파와 활용</li>
+            <li><strong>특징</strong>: 변경 이벤트를 감지하여 다양한 형태로 가공 가능</li>
+            <li><strong>예시</strong>: 변경된 사용자 정보를 알림 서비스, 추천 시스템 등에 전파</li>
+            <li><strong>활용</strong>: 실시간 동기화, 이벤트 기반 아키텍처, 데이터 파이프라인</li>
+        </ul>
+
+        <h2>3. CDC (Change Data Capture) 상세</h2>
+        <h3>정의</h3>
+        <p>데이터베이스 변경사항을 실시간으로 감지하고 다른 시스템에 전파하는 기술</p>
+
+        <h3>구현 내용</h3>
+        <ul>
+            <li>데이터 변경 이벤트 감지 (INSERT, UPDATE, DELETE)</li>
+            <li>변경 전후 데이터 캡처</li>
+            <li>메시지 큐나 API를 통한 다운스트림 시스템 연동</li>
+            <li>각 서비스가 필요한 데이터를 로컬에 복사본으로 보유</li>
+        </ul>
+
+        <h3>CDC의 유연성</h3>
+        <ul>
+            <li>변경 감지한 데이터를 필요에 따라 변환, 필터링, 집계 가능</li>
+            <li>다양한 타겟 시스템에 맞춤형 데이터 전송</li>
+            <li>비즈니스 로직 적용하여 이벤트 처리</li>
+        </ul>
+
+        <h3>사용 목적</h3>
+        <ul>
+            <li>서비스 간 의존성 감소 (직접 API 호출 대신 로컬 데이터 조회)</li>
+            <li>성능 향상 (네트워크 지연 제거)</li>
+            <li>실시간 데이터 동기화</li>
+            <li>높은 가용성 보장</li>
+        </ul>
+
+        <h3>PostgreSQL에서의 CDC</h3>
+        <ul>
+            <li>기본적으로 비활성화 상태</li>
+            <li><code>wal_level</code>을 <code>logical</code>로 설정하여 활성화</li>
+            <li>논리적 복제 슬롯을 통해 변경사항 스트리밍</li>
+        </ul>
+
+        <h3>트레이드오프</h3>
+        <p><strong>장점:</strong></p>
+        <ul>
+            <li>성능 향상</li>
+            <li>가용성 증대</li>
+            <li>실시간 반응</li>
+            <li>데이터 활용 유연성</li>
+        </ul>
+        <p><strong>단점:</strong></p>
+        <ul>
+            <li>시스템 복잡성 증가</li>
+            <li>최종 일관성 모델 (강한 일관성 대신)</li>
+        </ul>
+
+        <a href="../index.html" class="home-link">&larr; 이전으로 돌아가기</a>
+    </div>
+</body>
+</html>

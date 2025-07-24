@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CQRS 도커 프로젝트 팀 가이드</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 2rem 3rem;
+        }
+        .content-container h2 {
+            color: #34495e;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        .content-container h3 {
+            color: #4a627a;
+            margin-top: 1.5rem;
+        }
+        .content-container p, .content-container li {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #555;
+        }
+        .content-container ul {
+            padding-left: 20px;
+        }
+        .content-container code {
+            background-color: #e9ecef;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+        .content-container pre {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        th, td {
+            border: 1px solid #e9ecef;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>CQRS 도커 프로젝트 팀 가이드</h1>
+    </header>
+
+    <div class="content-container">
+        <h2>📖 개요</h2>
+        <p>Docker, Patroni, HAProxy를 활용한 CQRS 아키텍처 프로젝트입니다.<br><strong>읽기와 쓰기를 완전 분리</strong>하여 성능과 가용성을 향상시킵니다.</p>
+
+        <h2>🏗️ 아키텍처</h2>
+        <pre><code>Write Network (쓰기용)           Read Network (읽기용)
+┌─────────────────────┐         ┌─────────────────────┐
+│ etcd + patroni1,2   │ ──────→ │ postgres-read1,2,3  │
+│ (Master-Slave)      │ 복제    │ (읽기 전용)          │
+└─────────────────────┘         └─────────────────────┘
+          ↑                              ↑
+          │                              │
+      ┌─────────────────────────────────────┐
+      │           HAProxy                  │
+      │ Write: 15000  Read: 15001         │
+      └─────────────────────────────────────┘</code></pre>
+        <p><strong>핵심 원리</strong>:</p>
+        <ul>
+            <li><strong>Command(쓰기)</strong>: 15000포트 → Master-Slave DB</li>
+            <li><strong>Query(읽기)</strong>: 15001포트 → 3개 읽기 전용 DB</li>
+            <li><strong>복제</strong>: 실시간 스트리밍으로 데이터 동기화</li>
+            <li><strong>페일오버</strong>: Master 장애시 Slave 자동 승격</li>
+        </ul>
+
+        <h2>🚀 빠른 시작</h2>
+        <h3>1. 설치</h3>
+        <pre><code>git clone https://github.com/nicemso/temp-cqrs.git
+cd temp-cqrs
+
+# Patroni 이미지 빌드 (최초 1회만)
+git clone https://github.com/patroni/patroni.git
+cd patroni && docker build -t patroni:4.0.6 . && cd ..
+
+# 전체 시스템 시작
+docker compose up -d</code></pre>
+
+        <h3>2. 상태 확인</h3>
+        <pre><code># 서비스 상태
+docker compose ps
+
+# 클러스터 상태
+curl http://localhost:8008/cluster
+
+# 모니터링 대시보드
+open http://localhost:18080/stats</code></pre>
+
+        <h2>🧪 테스트</h2>
+        <h3>CQRS 동작 확인</h3>
+        <pre><code># 1. 쓰기 테스트 (Command)
+psql -h localhost -p 15000 -U postgres -c "
+  CREATE TABLE test (id SERIAL, message TEXT);
+  INSERT INTO test (message) VALUES ('Hello CQRS');
+"
+
+# 2. 읽기 테스트 (Query) 
+psql -h localhost -p 15001 -U postgres -c "
+  SELECT * FROM test;
+"
+
+# 3. 읽기 DB 쓰기 차단 확인
+psql -h localhost -p 15001 -U postgres -c "
+  INSERT INTO test (message) VALUES ('Should fail');
+"
+# 결과: ERROR: cannot execute INSERT in a read-only transaction</code></pre>
+
+        <h3>자동화 테스트</h3>
+        <pre><code>cd test-application
+python3 test_haproxy.py              # 전체 테스트
+python3 test_haproxy.py --interactive # 대화형 테스트</code></pre>
+
+        <h2>🔧 운영 가이드</h2>
+        <h3>모니터링</h3>
+        <ul>
+            <li><strong>HAProxy Stats</strong>: http://localhost:18080/stats</li>
+            <li><strong>복제 상태</strong>: <code>SELECT * FROM pg_stat_replication;</code> (Write DB에서)</li>
+            <li><strong>서비스 로그</strong>: <code>docker compose logs -f</code></li>
+        </ul>
+
+        <h3>페일오버 테스트</h3>
+        <pre><code># Master 중지 → 자동 페일오버 확인
+docker stop patroni1
+curl http://localhost:8009/master  # 200 응답으로 변경되어야 함
+
+# 복구
+docker start patroni1</code></pre>
+
+        <h3>Read DB 확장</h3>
+        <pre><code># docker-compose.yml에 추가
+postgres-read4:
+  image: postgres:16
+  # ... 기존 read1과 동일한 설정
+  ports:
+    - "5443:5432"</code></pre>
+
+        <h2>🎯 핵심 포인트</h2>
+        <h3>장점</h3>
+        <ul>
+            <li><strong>성능</strong>: 읽기 부하 분산으로 응답속도 향상</li>
+            <li><strong>가용성</strong>: 자동 페일오버로 무중단 서비스</li>
+            <li><strong>확장성</strong>: Read DB 추가로 읽기 성능 스케일링</li>
+        </ul>
+
+        <h3>주의사항</h3>
+        <ul>
+            <li><strong>복제 지연</strong>: 수 밀리초 지연 가능 (일반적으로 무시 가능)</li>
+            <li><strong>읽기 전용</strong>: Read DB에서 쓰기 시도시 오류 발생</li>
+            <li><strong>연결 분리</strong>: 애플리케이션에서 용도별 포트 구분 필수</li>
+        </ul>
+
+        <h3>포트 정리</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>용도</th>
+                    <th>포트</th>
+                    <th>설명</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Write</td>
+                    <td>15000</td>
+                    <td>모든 쓰기 작업 (INSERT, UPDATE, DELETE)</td>
+                </tr>
+                <tr>
+                    <td>Read</td>
+                    <td>15001</td>
+                    <td>모든 읽기 작업 (SELECT)</td>
+                </tr>
+                <tr>
+                    <td>Stats</td>
+                    <td>18080</td>
+                    <td>HAProxy 모니터링 대시보드</td>
+                </tr>
+                <tr>
+                    <td>Direct</td>
+                    <td>5432-5442</td>
+                    <td>개별 DB 직접 접근 (디버깅용)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr>
+        <p><strong>📚 참고 자료</strong>:</p>
+        <ul>
+            <li><a href="https://docs.microsoft.com/en-us/azure/architecture/patterns/cqrs" target="_blank">CQRS 패턴</a></li>
+            <li><a href="https://patroni.readthedocs.io/" target="_blank">Patroni 문서</a></li>
+            <li><a href="https://www.postgresql.org/docs/current/high-availability.html" target="_blank">PostgreSQL 복제</a></li>
+        </ul>
+
+        <a href="../index.html" class="home-link">&larr; 이전으로 돌아가기</a>
+    </div>
+</body>
+</html>
