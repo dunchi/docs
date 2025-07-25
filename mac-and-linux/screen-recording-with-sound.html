@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>맥북 화면 녹화 시 소리 포함하기</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 2rem 3rem;
+        }
+        .content-container h2 {
+            color: #34495e;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        .content-container h3 {
+            color: #4a627a;
+            margin-top: 1.5rem;
+        }
+        .content-container p, .content-container li {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #555;
+        }
+        .content-container ul, .content-container ol {
+            padding-left: 20px;
+        }
+        .content-container code {
+            background-color: #e9ecef;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+        .content-container pre {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+        .meta-info {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>맥북에서 화면 녹화와 소리 녹음을 동시에 하는 방법</h1>
+    </header>
+
+    <div class="content-container">
+        <h2>📋 개요</h2>
+        <p>맥북을 사용하여 화상 회의를 녹화할 때, 기본 내장된 화면 녹화 프로그램은 시스템 소리를 함께 녹음하지 못하는 문제가 있습니다. 이 문서는 <code>BlackHole</code>이라는 오픈소스 오디오 드라이버를 활용하여 이 문제를 해결하는 방법을 공유하기 위해 작성되었습니다.</p>
+        <p>핵심 원리는 시스템에서 출력되는 소리(스피커)를 가상의 마이크 입력으로 다시 보내(loopback) 녹화 프로그램이 시스템 소리를 마이크 입력으로 인식하게 만드는 것입니다.</p>
+
+        <h2>🛠️ 방법의 개요</h2>
+        <p>전체 과정은 다음과 같이 세 단계로 요약할 수 있습니다.</p>
+        <ol>
+            <li>가상 오디오 드라이버(BlackHole)를 설치합니다.</li>
+            <li>내장 마이크와 시스템 소리(스피커) 출력을 합쳐 가상 마이크 드라이버의 입력으로 전달하는 오디오 장치를 설정합니다.</li>
+            <li>화면 녹화 프로그램의 오디오 입력 소스를 위에서 생성한 가상 마이크로 설정합니다.</li>
+        </ol>
+
+        <h2>⚙️ 상세 절차</h2>
+        
+        <h3>1. 가상 드라이버 설치</h3>
+        <p>먼저, 아래 링크에서 BlackHole 오디오 드라이버를 설치합니다.</p>
+        <ul>
+            <li><strong>다운로드 링크:</strong> <a href="https://github.com/ExistentialAudio/BlackHole" target="_blank">https://github.com/ExistentialAudio/BlackHole</a></li>
+        </ul>
+        
+        <h3>2. 재부팅</h3>
+        <p>드라이버 설치 후, 시스템을 재부팅하여 드라이버가 정상적으로 인식되도록 합니다.</p>
+
+        <h3>3. Audio MIDI 설정</h3>
+        <p>Spotlight(<code>Cmd + Space</code>)에서 <code>Audio MIDI Setup</code>을 검색하여 실행합니다.</p>
+        
+        <h4>a. 다중 출력 장치 생성 (Multi-Output Device)</h4>
+        <ol>
+            <li>좌측 하단의 <strong>+</strong> 버튼을 클릭하고 <code>Create Multi-Output Device</code>를 선택합니다.</li>
+            <li>생성된 장치 목록에서 <strong>Primary Device</strong>를 <code>MacBook Pro Speakers</code> (또는 사용 중인 주 스피커)로 설정합니다.</li>
+            <li><code>BlackHole 2ch</code>를 <strong>Use</strong> 체크합니다.</li>
+            <li><code>BlackHole 2ch</code>의 <strong>Drift Correction</strong>을 체크합니다.</li>
+        </ol>
+        
+        <h4>b. 통합 장치 생성 (Aggregate Device)</h4>
+        <ol>
+            <li>다시 좌측 하단의 <strong>+</strong> 버튼을 클릭하고 <code>Create Aggregate Device</code>를 선택합니다.</li>
+            <li><strong>Clock Source</strong>를 <code>MacBook Pro Microphone</code> (또는 사용 중인 주 마이크)로 설정합니다.</li>
+            <li>장치 목록에서 <code>MacBook Pro Microphone</code>과 <code>BlackHole 2ch</code>를 모두 <strong>Use</strong> 체크합니다.</li>
+            <li><code>BlackHole 2ch</code>의 <strong>Drift Correction</strong>을 체크합니다.</li>
+        </ol>
+
+        <h3>4. 시스템 사운드 설정</h3>
+        <p>시스템 설정(System Settings)의 사운드(Sound) 메뉴로 이동합니다.</p>
+        <ul>
+            <li><strong>출력(Output)</strong>: <code>Multi-Output Device</code>로 선택합니다.</li>
+            <li><strong>입력(Input)</strong>: <code>Aggregate Device</code>로 선택합니다.</li>
+        </ul>
+
+        <h3>5. 볼륨 조절</h3>
+        <p>위 설정을 마치면 키보드의 볼륨 조절 키가 동작하지 않게 됩니다. 볼륨은 <code>Audio MIDI Setup</code>에서 직접 조절해야 합니다.</p>
+        <ul>
+            <li><strong>Multi-Output Device</strong> 설정에서 <code>MacBook Pro Speakers</code>의 볼륨을 적절하게 조절하여 실제 듣는 소리 크기를 맞춥니다.</li>
+            <li><strong>Aggregate Device</strong> 설정에서 <code>MacBook Pro Microphone</code>과 <code>BlackHole 2ch</code>의 볼륨을 1로 설정하여 녹음되는 소리가 너무 크거나 작지 않도록 합니다. (이후 녹음 테스트를 통해 적절한 값으로 조절)</li>
+        </ul>
+        <p>이제 화면 녹화 프로그램을 실행하고, 오디오 입력 소스를 <code>Aggregate Device</code>로 설정하면 화면과 함께 시스템 소리, 마이크 소리가 모두 녹음됩니다.</p>
+
+        <div class="meta-info">
+            <p><em>작성일: 2025년 7월 25일</em></p>
+        </div>
+
+        <a href="../index.html" class="home-link">&larr; 이전으로 돌아가기</a>
+    </div>
+</body>
+</html>
