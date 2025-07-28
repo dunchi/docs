@@ -198,10 +198,7 @@ function getCardHtml(item, relativePath = '') {
     let cardTitle = isFolder ? item.name : fileName;
     let cardDescription = '';
 
-    if (item.path === 'about.html') {
-        cardTitle = '소개';
-        cardDescription = '이 사이트에 대한 정보를 확인하세요.';
-    } else if (isFolder) {
+     if (isFolder) {
         const fileCount = item.children.filter(c => c.type === 'file').length || '';
         const folderCount = item.children.filter(c => c.type === 'directory').length || '';
 
@@ -271,14 +268,14 @@ function generateIndexPage(node, rootDir) {
     const currentDirPath = path.join(rootDir, node.path);
     const relativePathToRoot = path.relative(currentDirPath, rootDir).replace(/\\/g, '/');
 
-    // Prioritize about.html if it's a direct child of the current node
-    const aboutFile = node.children.find(child => child.path === 'about.html');
-    if (aboutFile) {
-        cardsHtml += getCardHtml(aboutFile, relativePathToRoot ? `${relativePathToRoot}/` : '');
+    // Prioritize README.md.html if it's a direct child of the current node
+    const readmeFile = node.children.find(child => child.path === 'README.md.html');
+    if (readmeFile) {
+        cardsHtml += getCardHtml(readmeFile, relativePathToRoot ? `${relativePathToRoot}/` : '');
     }
 
     node.children.forEach(child => {
-        if (child.path !== 'about.html') { // Skip about.html if already processed
+        if (child.path !== 'README.md.html') { // Skip README.md.html if already processed
             cardsHtml += getCardHtml(child, relativePathToRoot ? `${relativePathToRoot}/` : '');
         }
         if (child.type === 'directory') {
