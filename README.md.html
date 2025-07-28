@@ -47,20 +47,183 @@
             color: #007bff;
             font-weight: 500;
         }
+        .career-item {
+            margin-bottom: 0.5rem; /* Reduced margin-bottom */
+            padding: 0.5rem; /* Reduced padding */
+            border-left: 5px solid;
+            border-radius: 5px;
+        }
+        .career-item p {
+            margin: 0; /* Remove default paragraph margin */
+            line-height: 1.4; /* Slightly reduced line-height for tighter text */
+        }
+        .career-item.developer {
+            border-color: #28a745; /* Green for Developer */
+            background-color: #e6ffe6;
+        }
+        .career-item.electronics {
+            border-color: #007bff; /* Blue for Electronics */
+            background-color: #e6f2ff;
+        }
+        .career-item.military {
+            border-color: #6c757d; /* Gray for Military */
+            background-color: #f2f2f2;
+        }
+        .career-item.personal {
+            border-color: #ffc107; /* Yellow for Personal */
+            background-color: #fff8e6;
+        }
+        .career-type-tag {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 0.3rem; /* Reduced margin-top */
+            display: block;
+            text-align: right;
+        }
+        .total-experience {
+            font-weight: bold;
+            color: #dc3545; /* Red for total experience */
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: #ffe6e6;
+            border-radius: 8px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <header class="header">
-        <h1>문서 라이브러리 소개</h1>
+        <h1>README.md</h1>
     </header>
 
     <div class="content-container">
         <h2>목적</h2>
         <p style="text-align: center;">이 사이트는 <strong>dunchi</strong>가 사용하는 문서를 웹상에 올리고,</p>
-        <p style="text-align: center;">다른 사용자와 공유하거나 문서를 보존시키기 위해 만들었습니다.</p>
+        <p style="text-align: center;">다른 사용자와 공유하거나 문서를 보존시키기 위해, 90% 바이브코딩으로 개발되었습니다.</p>
         <p style="text-align: center;">유익한 열람되시길 바랍니다.</p>
+
+        <h2>경력</h2>
+        <div id="career-info"></div>
+
         <a href="index.html" class="home-link">&larr; 메인으로 돌아가기</a>
     </div>
+
+    <script>
+        function calculateAge(birthYear, date) {
+            const d = new Date(date);
+            return d.getFullYear() - birthYear + 1; // 한국식 나이 계산
+        }
+
+        function calculateDuration(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = endDate ? new Date(endDate) : new Date();
+            let years = end.getFullYear() - start.getFullYear();
+            let months = end.getMonth() - start.getMonth();
+            let days = end.getDate() - start.getDate();
+
+            if (days < 0) {
+                months--;
+                days += new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+            }
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            let duration = "";
+            if (years > 0) duration += `${years}년 `;
+            if (months > 0) duration += `${months}개월 `;
+            if (days > 0) duration += `${days}일`;
+
+            return duration.trim();
+        }
+
+        function calculateDurationInMonths(startDate, endDate) {
+            const start = new Date(startDate);
+            const end = endDate ? new Date(endDate) : new Date();
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Total days
+            return Math.round(diffDays / 30.44); // Average days in a month
+        }
+
+        const careers = [
+            { name: '출생', startDate: '1997-03-07', endDate: '1997-03-07', type: '개인사' },
+            { name: '해병대 입대', startDate: '2020-11-16', endDate: '2022-05-15', type: '군복무', link: 'tmp/정부24_병적증명서_202507278.pdf', linkText: '병적증명서 보기' },
+            { name: '나이스노무법인', startDate: '2025-03-19', endDate: null, type: '개발자' },
+            { name: '센스토어', startDate: '2023-04-03', endDate: '2024-11-30', type: '개발자' },
+            { name: '(주)고려소프트웨어', startDate: '2022-06-07', endDate: '2022-09-07', type: '개발자' },
+            { name: '주식회사 이엔지소프트', startDate: '2017-11-20', endDate: '2020-08-15', type: '개발자' },
+            { name: '쌍용교육센터', subName: 'SW개발 교육 수료', startDate: '2017-04-03', endDate: '2017-11-30', type: '개발자', nameLink: 'https://www.sist.co.kr/' },
+            { name: '(주)상아프론테크1공장', startDate: '2016-06-13', endDate: '2017-04-01', type: '전기/전자' }
+        ];
+
+        // Sort careers by start date (descending for latest first)
+        careers.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+
+        let totalSoftwareExperienceMs = 0;
+        // Calculate total software experience first
+        careers.forEach(career => {
+            if (career.type === '개발자') {
+                const start = new Date(career.startDate);
+                const end = career.endDate ? new Date(career.endDate) : new Date();
+                totalSoftwareExperienceMs += end - start;
+            }
+        });
+
+        const totalYears = Math.floor(totalSoftwareExperienceMs / (365.25 * 24 * 60 * 60 * 1000));
+        const totalMonths = Math.floor((totalSoftwareExperienceMs % (365.25 * 24 * 60 * 60 * 1000)) / (30.44 * 24 * 60 * 60 * 1000));
+
+        const careerInfo = document.getElementById('career-info');
+        careerInfo.innerHTML += `<p class="total-experience"><strong>총 개발자 경력:</strong> ${totalYears}년 ${totalMonths}개월</p>`;
+
+        let careerNumber = 1;
+        careers.forEach(career => {
+            const ageAtStart = calculateAge(1997, career.startDate);
+            const ageAtEnd = career.endDate ? calculateAge(1997, career.endDate) : calculateAge(1997, new Date());
+
+            const duration = calculateDuration(career.startDate, career.endDate);
+            const workingDays = career.endDate ? '' : `(${calculateDuration(career.startDate, null)}째 근무 중)`;
+
+            let careerClass = '';
+            if (career.type === '개발자') {
+                careerClass = 'developer';
+            } else if (career.type === '전기/전자') {
+                careerClass = 'electronics';
+            } else if (career.type === '군복무') {
+                careerClass = 'military';
+            } else if (career.type === '개인사') {
+                careerClass = 'personal';
+            }
+
+            let displayHtml = `
+                <div class="career-item ${careerClass}">
+                    <p>
+                        <span class="career-number">${careerNumber}. </span>
+                        <strong>`;
+            if (career.nameLink) {
+                displayHtml += `<a href="${career.nameLink}" target="_blank">${career.name}</a>`;
+                if (career.subName) {
+                    displayHtml += ` ${career.subName}`; // Add subName after the linked name
+                }
+            } else {
+                displayHtml += `${career.name}`;
+            }
+            displayHtml += `</strong><br>
+`;
+
+            const durationInMonths = calculateDurationInMonths(career.startDate, career.endDate);
+            displayHtml += `(<strong>${durationInMonths}개월</strong>, ${ageAtStart}세 ~ ${ageAtEnd}세) ${workingDays}<br>
+`;
+            displayHtml += `${career.startDate} ~ ${career.endDate || '재직 중'}`; // Date range
+
+            if (career.link) {
+                displayHtml += ` (<a href="${career.link}" target="_blank">${career.linkText || '자세히 보기'}</a>)`;
+            }
+            displayHtml += `<span class="career-type-tag">#${career.type}</span></p></div>`;
+            careerInfo.innerHTML += displayHtml;
+            careerNumber++;
+        });
+    </script>
 
 </body>
 </html>
