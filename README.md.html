@@ -76,9 +76,19 @@
         .career-type-tag {
             font-size: 0.9em;
             color: #6c757d;
-            margin-top: 0.3rem; /* Reduced margin-top */
+        }
+        .career-tags {
+            font-size: 0.9em;
+            color: #4CAF50; /* A different color for tags */
+        }
+        .career-tags-group {
             display: block;
             text-align: right;
+            margin-top: 0.3rem;
+        }
+        .career-tags-container {
+            text-align: right;
+            margin-top: 0.3rem;
         }
         .total-experience {
             font-weight: bold;
@@ -100,7 +110,7 @@
         <h2>목적</h2>
         <p style="text-align: center;">이 사이트는 <a href="https://github.com/dunchi" target="_blank">dunchi</a> 가 사용하는 문서를 웹상에 올려서 다른 사용자와 공유하거나,</p>
         <p style="text-align: center;">문서를 보존시키기 위해 90% 바이브코딩으로 개발되었습니다.</p>
-        <p style="text-align: center;">유익한 열람되시길 바랍니다.</p>
+        <p style="text-align: center;">유익한 열람되시기 바랍니다.</p>
 
         <h2>경력</h2>
         <div id="career-info"></div>
@@ -154,6 +164,7 @@
             { name: '(주)고려소프트웨어', startDate: '2022-06-07', endDate: '2022-09-07', type: '개발자' },
             { name: '주식회사 이엔지소프트', startDate: '2017-11-20', endDate: '2020-08-15', type: '개발자' },
             { name: '쌍용교육센터', subName: 'SW개발 교육 수료', startDate: '2017-04-03', endDate: '2017-11-30', type: '개발자', nameLink: 'https://www.sist.co.kr/' },
+                        { name: '마이스터고등학교 졸업', startDate: '2013-03-01', endDate: '2016-02-29', type: '학력', tags: ['기계공학', '공업화학', '전기전자', '원자력 발전'] },,
             { name: '(주)상아프론테크1공장', startDate: '2016-06-13', endDate: '2017-04-01', type: '전기/전자' }
         ];
 
@@ -193,6 +204,8 @@
                 careerClass = 'military';
             } else if (career.type === '개인사') {
                 careerClass = 'personal';
+            } else if (career.type === '학력') {
+                careerClass = 'personal'; // Using personal for now, can add new style if needed
             }
 
             let displayHtml = `
@@ -219,7 +232,12 @@
             if (career.link) {
                 displayHtml += ` (<a href="${career.link}" target="_blank">${career.linkText || '자세히 보기'}</a>)`;
             }
-            displayHtml += `<span class="career-type-tag">#${career.type}</span></p></div>`;
+            // Add tags and type here
+            displayHtml += `<span class="career-tags-group">`;
+            if (career.tags && career.tags.length > 0) {
+                displayHtml += `<span class="career-tags">#${career.tags.join(' #')}</span> `; // Added space after tags
+            }
+            displayHtml += `<span class="career-type-tag">#${career.type}</span></span></p></div>`;
             careerInfo.innerHTML += displayHtml;
             careerNumber++;
         });
