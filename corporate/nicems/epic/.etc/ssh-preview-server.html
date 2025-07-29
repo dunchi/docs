@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인터넷과 VPN 개발서버 동시 접속 가이드</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.8rem;
+            color: #007bff;
+            font-weight: 600;
+        }
+        .content-container {
+            max-width: 850px;
+            margin: 2rem auto;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem 3.5rem;
+        }
+        .content-container h2 {
+            color: #28a745;
+            border-bottom: 3px solid #dee2e6;
+            padding-bottom: 0.8rem;
+            margin-top: 2.5rem;
+            font-size: 2rem;
+        }
+        .content-container h3 {
+            color: #17a2b8;
+            margin-top: 2rem;
+            font-size: 1.5rem;
+        }
+        .content-container p, .content-container li {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #495057;
+        }
+        .content-container ul, .content-container ol {
+            padding-left: 25px;
+        }
+        .content-container code {
+            background-color: #e9ecef;
+            padding: 0.3rem 0.5rem;
+            border-radius: 6px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            color: #c7254e;
+            font-size: 0.95rem;
+        }
+        .content-container pre {
+            background-color: #343a40;
+            color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+        }
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 3rem;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .meta-info {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 3rem;
+        }
+        .alert {
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: .25rem;
+        }
+        .alert-info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+        }
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+        .slider-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .slider {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            cursor: grab;
+        }
+        .slide {
+            min-width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+        }
+        .slide img {
+            width: 100%;
+            display: block;
+        }
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+        }
+        .prev-btn {
+            left: 10px;
+        }
+        .next-btn {
+            right: 10px;
+        }
+        .slide-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+        .maximize-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 50%;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>인터넷과 VPN 개발서버 동시 접속 가이드</h1>
+    </header>
+
+    <div class="content-container">
+        <div class="alert alert-info">
+            <strong>목표:</strong> '연결하면 인터넷이 끊기는' VPN을 UTM으로 생성한 VM에 설치하여, 로컬 머신에서는 자유롭게 인터넷을 사용하면서 동시에 VM을 통해 개발 서버에 접속하는 환경을 구축합니다.
+        </div>
+
+        <h2>설치 방법</h2>
+        <ol>
+            <li><strong>Ubuntu Server 다운로드:</strong><br>
+                <a href="https://ubuntu.com/download/server/arm" target="_blank">Ubuntu Server 24.04.2 LTS for ARM</a> 페이지에서 이미지를 다운로드합니다.
+            </li>
+            <li><strong>UTM 설치:</strong><br>
+                <pre><code>brew install --casks utm</code></pre>
+            </li>
+            <li><strong>UTM 실행 및 VM 생성:</strong><br>
+                UTM을 실행하고, 다운로드한 Ubuntu Server 이미지로 새 가상머신(VM)을 생성합니다.
+                <!-- Slider Start -->
+                <div class="slider-container">
+                    <div class="slider">
+                        <!-- Slides will be injected by JS -->
+                    </div>
+                    <button class="slider-btn prev-btn">&lt;</button>
+                    <button class="slider-btn next-btn">&gt;</button>
+                    <button class="maximize-btn">&#x26F6;</button>
+                    <div class="slide-counter"></div>
+                </div>
+
+                <script>
+                    const slider = document.querySelector('.slider');
+                    const prevBtn = document.querySelector('.prev-btn');
+                    const nextBtn = document.querySelector('.next-btn');
+                    const counter = document.querySelector('.slide-counter');
+                    const sliderContainer = document.querySelector('.slider-container');
+                    const maximizeBtn = document.querySelector('.maximize-btn');
+
+                    const totalSlides = 32;
+                    let currentIndex = 1; // Start at the first real slide
+                    let isDragging = false;
+                    let startPos = 0;
+                    let currentTranslate = 0;
+                    let prevTranslate = 0;
+                    let animationID;
+
+                    // Create slides and add clones for infinite loop
+                    const imagePaths = [];
+                    for (let i = 1; i <= totalSlides; i++) {
+                        imagePaths.push(`../../../../tmp/ssh-preview-server/${i}.png`);
+                    }
+
+                    const slideElements = [imagePaths[totalSlides - 1], ...imagePaths, imagePaths[0]].map(src => {
+                        const slide = document.createElement('div');
+                        slide.classList.add('slide');
+                        const img = document.createElement('img');
+                        img.src = src;
+                        img.alt = 'Slide';
+                        slide.appendChild(img);
+                        return slide;
+                    });
+
+                    slideElements.forEach(slide => slider.appendChild(slide));
+                    
+                    const slides = document.querySelectorAll('.slide');
+
+                    function setSliderPosition() {
+                        currentTranslate = -currentIndex * sliderContainer.clientWidth;
+                        slider.style.transform = `translateX(${currentTranslate}px)`;
+                    }
+                    
+                    function updateCounter() {
+                        let counterIndex = currentIndex;
+                        if (currentIndex === 0) {
+                            counterIndex = totalSlides;
+                        } else if (currentIndex === totalSlides + 1) {
+                            counterIndex = 1;
+                        }
+                        counter.textContent = `${counterIndex} / ${totalSlides}`;
+                    }
+
+                    function nextSlide() {
+                        if (currentIndex >= totalSlides + 1) return;
+                        currentIndex++;
+                        slider.style.transition = 'transform 0.5s ease-in-out';
+                        setSliderPosition();
+                        updateCounter();
+                    }
+
+                    function prevSlide() {
+                        if (currentIndex <= 0) return;
+                        currentIndex--;
+                        slider.style.transition = 'transform 0.5s ease-in-out';
+                        setSliderPosition();
+                        updateCounter();
+                    }
+                    
+                    slider.addEventListener('transitionend', () => {
+                        if (currentIndex === 0) {
+                            slider.style.transition = 'none';
+                            currentIndex = totalSlides;
+                            setSliderPosition();
+                        }
+                        if (currentIndex === totalSlides + 1) {
+                            slider.style.transition = 'none';
+                            currentIndex = 1;
+                            setSliderPosition();
+                        }
+                    });
+
+                    nextBtn.addEventListener('click', nextSlide);
+                    prevBtn.addEventListener('click', prevSlide);
+                    maximizeBtn.addEventListener('click', () => {
+                        window.open(imagePaths[currentIndex - 1], '_blank');
+                    });
+
+                    // Drag functionality
+                    slider.addEventListener('mousedown', dragStart);
+                    slider.addEventListener('touchstart', dragStart);
+
+                    slider.addEventListener('mouseup', dragEnd);
+                    slider.addEventListener('touchend', dragEnd);
+
+                    slider.addEventListener('mouseleave', dragEnd);
+
+                    slider.addEventListener('mousemove', drag);
+                    slider.addEventListener('touchmove', drag);
+
+                    function dragStart(event) {
+                        if (event.type === 'touchstart') {
+                            startPos = event.touches[0].clientX;
+                        } else {
+                            startPos = event.clientX;
+                            event.preventDefault();
+                        }
+                        isDragging = true;
+                        animationID = requestAnimationFrame(animation);
+                        slider.style.cursor = 'grabbing';
+                        slider.style.transition = 'none';
+                    }
+                    
+                    function animation() {
+                        slider.style.transform = `translateX(${currentTranslate}px)`;
+                        if(isDragging) requestAnimationFrame(animation);
+                    }
+
+                    function drag(event) {
+                        if (isDragging) {
+                            const currentPosition = event.type === 'touchmove' ? event.touches[0].clientX : event.clientX;
+                            currentTranslate = prevTranslate + currentPosition - startPos;
+                        }
+                    }
+
+                    function dragEnd(event) {
+                        if (!isDragging) return;
+                        isDragging = false;
+                        cancelAnimationFrame(animationID);
+                        
+                        const movedBy = currentTranslate - prevTranslate;
+
+                        if (movedBy < -100 && currentIndex < totalSlides + 1) {
+                            currentIndex++;
+                        }
+
+                        if (movedBy > 100 && currentIndex > 0) {
+                            currentIndex--;
+                        }
+                        
+                        slider.style.transition = 'transform 0.5s ease-in-out';
+                        setSliderPosition();
+                        updateCounter();
+
+                        prevTranslate = currentTranslate;
+                        slider.style.cursor = 'grab';
+                    }
+                    
+                    // Initial setup
+                    window.addEventListener('resize', setSliderPosition);
+                    setSliderPosition();
+                    updateCounter();
+                    prevTranslate = -currentIndex * sliderContainer.clientWidth;
+
+
+                </script>
+                <!-- Slider End -->
+            </li>
+            <li><strong>IP 주소 확인:</strong><br>
+                VM 설치 과정 중 나타나는 웰컴 메시지에서 할당된 IP 주소를 확인합니다.
+            </li>
+            <li><strong>필수 패키지 설치:</strong><br>
+                VM에 접속하여 아래 명령어로 패키지를 설치합니다.
+                <pre><code>sudo apt update && sudo apt upgrade -y
+sudo apt install openssh-server wireguard -y</code></pre>
+            </li>
+            <li><strong>VM 종료:</strong><br>
+                <pre><code>sudo shutdown -h now</code></pre>
+            </li>
+            <li><strong>VM 이름 확인 및 재시작:</strong><br>
+                로컬 터미널에서 아래 명령어로 VM의 <code>Name</code>을 확인하고 재시작합니다.
+                <pre><code>utmctl list
+utmctl start {VM_Name}</code></pre>
+            </li>
+            <li><strong>VM 접속:</strong><br>
+                <pre><code>ssh {아까 확인한 VM의 IP주소}</code></pre>
+            </li>
+            <li><strong>WireGuard 설정 파일 생성:</strong><br>
+                <pre><code>sudo vim /etc/wireguard/wg0.conf</code></pre>
+            </li>
+            <li><strong>VPN 정보 입력:</strong><br>
+                PO에게 전달받은 VPN 설정 정보를 <code>wg0.conf</code> 파일에 붙여넣고 저장합니다.
+            </li>
+            <li><strong>VPN 활성화:</strong><br>
+                <pre><code>sudo wg-quick up wg0</code></pre>
+            </li>
+            <li><strong>부팅 시 VPN 자동 실행 설정:</strong><br>
+                <pre><code>sudo systemctl enable wg-quick@wg0</code></pre>
+            </li>
+            <li><strong>개발 서버 접속 테스트:</strong><br>
+                VM 안에서 아래 명령어로 개발 서버에 최종 접속되는지 확인합니다.
+                <pre><code>ssh nice@10.10.2.9</code></pre>
+            </li>
+        </ol>
+    </div>
+
+    <div class="content-container">
+        <h2>사용 방법</h2>
+        <ol>
+            <li><strong>UTM 가상머신 켜기:</strong><br>
+                UTM 앱을 실행하거나, 터미널에서 <code>utmctl start {VM_Name}</code> 명령어로 VM을 시작합니다.
+            </li>
+            <li><strong>터미널에서 VM 접속:</strong><br>
+                <pre><code>ssh {VM_IP_주소}</code></pre>
+            </li>
+            <li><strong>개발 서버 접속:</strong><br>
+                VM에 접속된 상태에서 다시 ssh 명령어를 통해 개발 서버에 접속합니다.
+                <pre><code>ssh nice@10.10.2.9</code></pre>
+            </li>
+        </ol>
+        <div class="alert alert-warning">
+            <strong>참고:</strong> VM을 종료하고 싶을 때는 VM에 접속한 상태에서 <code>sudo shutdown -h now</code> 명령어를 사용하세요.
+        </div>
+    </div>
+
+    <a href="/Users/hanju/dev/docs-local/corporate/nicems/epic/.etc/github-action-deploy.html" class="home-link">&larr; 이전으로 돌아가기</a>
+</body>
+</html>
