@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리눅스에서 사용되는 유용한 명령어 모음</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+        }
+        .content-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 2rem 3rem;
+        }
+        .content-container h2 {
+            color: #34495e;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+        }
+        .content-container h3 {
+            color: #4a627a;
+            margin-top: 1.5rem;
+        }
+        .content-container p, .content-container li {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #555;
+        }
+        .content-container ul, .content-container ol {
+            padding-left: 20px;
+        }
+        .command-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+        .command-item h4 {
+            color: #495057;
+            margin: 0 0 1rem 0;
+            font-size: 1.2rem;
+        }
+        .code-container {
+            position: relative;
+            background-color: #2d3748;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+        .code-container code {
+            color: #e2e8f0;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Monaco, monospace;
+            font-size: 0.95rem;
+            display: block;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 50%;
+            right: 0.5rem;
+            transform: translateY(-50%);
+            background-color: #4a5568;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+        .copy-btn:hover {
+            background-color: #2d3748;
+        }
+        .copy-btn.copied {
+            background-color: #38a169;
+            color: white;
+        }
+        .section-docker {
+            border-left-color: #17a2b8;
+        }
+        .section-mac {
+            border-left-color: #28a745;
+        }
+        .section-linux {
+            border-left-color: #dc3545;
+        }
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+        .meta-info {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 3rem;
+        }
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 0.5rem;
+        }
+        .tag {
+            display: inline-block;
+            background-color: #6c757d;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .tag.docker { background-color: #0db7ed; }
+        .tag.linux { background-color: #fcc624; color: #333; }
+        .tag.mac { background-color: #999999; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>리눅스에서 사용되는 유용한 명령어 모음</h1>
+    </header>
+
+    <div class="content-container">
+        <h2><span class="emoji">📋</span>개요</h2>
+        <p>개발 및 시스템 관리 과정에서 자주 사용되는 유용한 명령어들을 정리한 문서입니다. 각 명령어는 카테고리별로 분류되어 있으며, 코드 옆의 복사 버튼을 클릭하여 간편하게 복사할 수 있습니다.</p>
+
+        <h2><span class="emoji">🐧</span>프로세스 관리</h2>
+        
+        <div class="command-item section-linux">
+            <h4><span class="tag linux">Linux</span>특정 포트에서 실행중인 프로세스 Kill</h4>
+            <p>지정된 포트에서 실행 중인 모든 프로세스를 강제로 종료합니다. 포트 충돌 해결에 유용합니다.</p>
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">복사</button>
+                <code>lsof -ti:7081 | xargs kill -9</code>
+            </div>
+        </div>
+
+        <h2><span class="emoji">🐳</span>Docker 관리</h2>
+        
+        <div class="command-item section-docker">
+            <h4><span class="tag docker">Docker</span>특정 노드의 현재 IP 확인</h4>
+            <p>Docker Swarm 환경에서 특정 노드의 IP 주소를 확인합니다.</p>
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">복사</button>
+                <code>docker node inspect 7hr21ku7xtha3cdffxddfh7zp --format '{{.Status.Addr}}'</code>
+            </div>
+        </div>
+
+        <div class="command-item section-docker">
+            <h4><span class="tag docker">Docker</span>전체 노드의 현재 IP 확인</h4>
+            <p>Docker Swarm 클러스터의 모든 노드와 해당 IP 주소를 테이블 형태로 출력합니다.</p>
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">복사</button>
+                <code>echo "노드명                                    IP 주소" && echo "==================================================" && for node_id in $(docker node ls --format "{{.ID}}"); do hostname=$(docker node inspect $node_id --format '{{.Description.Hostname}}'); ip=$(docker node inspect $node_id --format '{{.Status.Addr}}'); printf "%-40s %s\n" "$hostname" "$ip"; done</code>
+            </div>
+        </div>
+
+        <div class="command-item section-docker">
+            <h4><span class="tag docker">Docker</span>서비스의 실행중인 노드 확인</h4>
+            <p>특정 Docker 서비스가 어느 노드에서 실행되고 있는지 확인합니다.</p>
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">복사</button>
+                <code>docker service ps Development_stack_biseo-bff</code>
+            </div>
+        </div>
+
+        <h2><span class="emoji">🍎</span>macOS 관리</h2>
+        
+        <div class="command-item section-mac">
+            <h4><span class="tag mac">macOS</span>맥북 IP 주소 확인</h4>
+            <p>macOS에서 현재 사용 중인 네트워크 인터페이스의 IP 주소를 확인합니다.</p>
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">복사</button>
+                <code>ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}' | head -1</code>
+            </div>
+        </div>
+
+        <div class="meta-info">
+            <p><em>작성일: 2025년 8월 4일</em></p>
+        </div>
+
+        <a href="../index.html" class="home-link">&larr; 이전으로 돌아가기</a>
+    </div>
+
+    <script>
+        function copyCode(button) {
+            const codeElement = button.nextElementSibling;
+            const code = codeElement.textContent;
+            
+            navigator.clipboard.writeText(code).then(function() {
+                const originalText = button.textContent;
+                button.textContent = '복사됨!';
+                button.classList.add('copied');
+                
+                setTimeout(function() {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(function(err) {
+                console.error('복사 실패:', err);
+                button.textContent = '복사 실패';
+                setTimeout(function() {
+                    button.textContent = '복사';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
