@@ -185,6 +185,15 @@
             </div>
         </div>
 
+        <div class="command-item section-docker">
+            <h4><span class="tag docker">Docker</span>전체 서비스의 실행중인 노드 확인</h4>
+            <p>Docker Swarm 환경에서 모든 서비스가 어느 노드에서 실행되고 있는지 한 번에 확인합니다.</p>
+            <div class="code-container">
+                <button class="copy-btn" onclick="copyCode(this)">복사</button>
+                <code>docker service ls -q | xargs -I {} docker service ps {}</code>
+            </div>
+        </div>
+
         <h2><span class="emoji">🍎</span>macOS 관리</h2>
         
         <div class="command-item section-mac">
