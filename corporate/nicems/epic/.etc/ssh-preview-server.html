@@ -389,12 +389,14 @@ utmctl start {VM_Name}</code></pre>
             <li><strong>VPN 활성화:</strong><br>
                 <pre><code>sudo wg-quick up wg0</code></pre>
             </li>
-            <li><strong>부팅 시 VPN 자동 실행 설정:</strong><br>
-                <pre><code>sudo systemctl enable wg-quick@wg0</code></pre>
+            <li><strong>단축키 설정:</strong><br>
+                <pre><code>vim ~/.bashrc</code></pre>
+                <pre><code>..</code></pre>
+                <pre><code>alias prev='sudo wg-quick down wg0 && sudo wg-quick up wg0 && ssh nice@10.10.2.9'</code></pre>
             </li>
             <li><strong>개발 서버 접속 테스트:</strong><br>
                 VM 안에서 아래 명령어로 개발 서버에 최종 접속되는지 확인합니다.
-                <pre><code>ssh nice@10.10.2.9</code></pre>
+                <pre><code>prev</code></pre>
             </li>
         </ol>
     </div>
